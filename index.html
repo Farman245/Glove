@@ -4,58 +4,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فیکٹری مینجمنٹ - گوگل لاگ ان</title>
-    <!-- Tailwind CSS -->
+    <title>فیکٹری مینجمنٹ سسٹم</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
-    
     <style>
-        body { 
-            font-family: 'Noto Sans Arabic', sans-serif; 
-            background-color: #f8fafc;
-        }
-        .font-urdu { font-family: 'Noto Sans Arabic', sans-serif; }
-        
-        @media print {
-            .no-print { display: none !important; }
-            body { background-color: white; padding: 0; margin: 0; }
-            .print-table { width: 100%; border-collapse: collapse; }
-            .print-table th, .print-table td { 
-                border: 1px solid #ddd; 
-                padding: 10px; 
-                text-align: right; 
-                font-size: 14px;
-            }
-        }
-
+        body { font-family: 'Noto Sans Arabic', sans-serif; background-color: #f8fafc; }
+        @media print { .no-print { display: none !important; } body { background-color: white; } .print-table { width: 100%; border-collapse: collapse; } .print-table th, .print-table td { border: 1px solid #ddd; padding: 10px; text-align: right; } }
         .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
-    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <!-- React and Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyCa8tzZCqksEMIngMoC0F0k4DhNgA0lkzs",
             authDomain: "factory-a3ca2.firebaseapp.com",
@@ -65,9 +38,7 @@
             appId: "1:523923910997:web:6b7b1e93e80577092dbfdc"
         };
 
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
         const appId = 'glove-factory-app';
@@ -83,136 +54,85 @@
             const [toast, setToast] = useState('');
             const [editingItem, setEditingItem] = useState(null);
 
-            // Data States
             const [warehouseData, setWarehouseData] = useState([]);
             const [yarnData, setYarnData] = useState([]);
             const [productionData, setProductionData] = useState([]);
             const [packingData, setPackingData] = useState([]);
             const [machineData, setMachineData] = useState([]);
             const [salaryData, setSalaryData] = useState([]);
+            const [investmentData, setInvestmentData] = useState([]);
 
             useEffect(() => {
-                const unsubscribe = auth.onAuthStateChanged(u => {
-                    setUser(u);
-                    setLoading(false);
-                });
+                const unsubscribe = auth.onAuthStateChanged(u => { setUser(u); setLoading(false); });
                 return () => unsubscribe();
             }, []);
 
             useEffect(() => {
                 if (!user) return;
-
                 const collections = {
                     warehouse: setWarehouseData, yarn: setYarnData, production: setProductionData,
-                    packing: setPackingData, machine: setMachineData, salary: setSalaryData
+                    packing: setPackingData, machine: setMachineData, salary: setSalaryData, investment: setInvestmentData
                 };
-
-                const unsubscribes = Object.entries(collections).map(([colName, setter]) => {
-                    return db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection(colName)
+                const unsubscribes = Object.entries(collections).map(([col, setter]) => {
+                    return db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection(col)
                         .onSnapshot(snap => {
                             const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                             data.sort((a, b) => new Date(b.date) - new Date(a.date));
                             setter(data);
                         });
                 });
-
-                return () => unsubscribes.forEach(unsub => unsub());
+                return () => unsubscribes.forEach(u => u());
             }, [user]);
 
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            });
-
-            const handleGoogleLogin = () => {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                auth.signInWithPopup(provider).catch(err => showToast("لاگ ان میں غلطی: " + err.message));
-            };
-
-            const handleLogout = () => {
-                if(window.confirm("کیا آپ لاگ آؤٹ کرنا چاہتے ہیں؟")) {
-                    auth.signOut();
-                }
-            };
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
 
             const handleSave = async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
-                
-                const numericFields = ['bags', 'weight', 'weightPerBag', 'dozens', 'cost', 'amount', 'totalWeight'];
-                Object.keys(data).forEach(key => {
-                    if (numericFields.includes(key)) data[key] = parseFloat(data[key]) || 0;
-                });
-
+                const numFields = ['bags', 'weight', 'weightPerBag', 'dozens', 'cost', 'amount', 'totalWeight'];
+                Object.keys(data).forEach(k => { if (numFields.includes(k)) data[k] = parseFloat(data[k]) || 0; });
                 if (entryType === 'warehouse') data.totalWeight = (data.bags || 0) * (data.weightPerBag || 30);
 
                 try {
                     const colRef = db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection(entryType);
-                    if (editingItem) {
-                        await colRef.doc(editingItem.id).update(data);
-                        setEditingItem(null);
-                        showToast("ریکارڈ اپ ڈیٹ ہو گیا!");
-                    } else {
-                        await colRef.add({ ...data, timestamp: Date.now() });
-                        showToast("ریکارڈ محفوظ ہو گیا!");
-                    }
+                    if (editingItem) { await colRef.doc(editingItem.id).update(data); setEditingItem(null); }
+                    else { await colRef.add({ ...data, timestamp: Date.now() }); }
+                    showToast("محفوظ ہو گیا!");
                     e.target.reset();
-                } catch (err) {
-                    showToast("ایرر: محفوظ نہیں ہو سکا");
-                }
+                } catch (err) { showToast("ایرر!"); }
             };
 
-            const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
-            const filterMonth = (list) => list.filter(item => item.date && item.date.startsWith(selectedMonth));
-
             const stats = useMemo(() => {
-                const totalWHBags = warehouseData.reduce((s, i) => s + (i.bags || 0), 0);
-                const totalWHWeight = warehouseData.reduce((s, i) => s + (i.totalWeight || 0), 0);
-                const totalFacBags = yarnData.reduce((s, i) => s + (i.bags || 0), 0);
-                const totalFacWeight = yarnData.reduce((s, i) => s + (i.weight || 0), 0);
-
-                const mProd = filterMonth(productionData);
-                const mPack = filterMonth(packingData);
-                const mMach = filterMonth(machineData);
-                const mSal = filterMonth(salaryData);
-
+                const mProd = productionData.filter(i => i.date?.startsWith(selectedMonth));
+                const mPack = packingData.filter(i => i.date?.startsWith(selectedMonth));
+                const mMach = machineData.filter(i => i.date?.startsWith(selectedMonth));
+                const mSal = salaryData.filter(i => i.date?.startsWith(selectedMonth));
+                
                 return {
-                    whBags: totalWHBags - totalFacBags,
-                    whWeight: totalWHWeight - totalFacWeight,
+                    whBags: warehouseData.reduce((s, i) => s + (i.bags || 0), 0) - yarnData.reduce((s, i) => s + (i.bags || 0), 0),
                     prodDoz: mProd.reduce((s, i) => s + (i.dozens || 0), 0),
-                    prodWeight: mProd.reduce((s, i) => s + (i.weight || 0), 0),
-                    totalExp: mPack.reduce((s, i) => s + (i.cost || 0), 0) + 
-                              mMach.reduce((s, i) => s + (i.cost || 0), 0) + 
-                              mSal.reduce((s, i) => s + (i.amount || 0), 0)
+                    totalExp: mPack.reduce((s, i) => s + (i.cost || 0), 0) + mMach.reduce((s, i) => s + (i.cost || 0), 0) + mSal.reduce((s, i) => s + (i.amount || 0), 0),
+                    totalInv: investmentData.reduce((s, i) => s + (i.amount || 0), 0)
                 };
-            }, [warehouseData, yarnData, productionData, packingData, machineData, salaryData, selectedMonth]);
+            }, [warehouseData, yarnData, productionData, packingData, machineData, salaryData, investmentData, selectedMonth]);
 
             const currentList = useMemo(() => {
-                const dataMap = { warehouse: warehouseData, yarn: yarnData, production: productionData, packing: packingData, machine: machineData, salary: salaryData };
-                const list = dataMap[entryType] || [];
-                return entryType === 'warehouse' ? list : filterMonth(list);
-            }, [entryType, warehouseData, yarnData, productionData, packingData, machineData, salaryData, selectedMonth]);
+                const map = { warehouse: warehouseData, yarn: yarnData, production: productionData, packing: packingData, machine: machineData, salary: salaryData, investment: investmentData };
+                const list = map[entryType] || [];
+                return (entryType === 'warehouse' || entryType === 'investment') ? list : list.filter(i => i.date?.startsWith(selectedMonth));
+            }, [entryType, warehouseData, yarnData, productionData, packingData, machineData, salaryData, investmentData, selectedMonth]);
 
-            if (loading) return (
-                <div className="h-screen flex flex-col items-center justify-center bg-white">
-                    <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-            );
+            const showToast = (m) => { setToast(m); setTimeout(() => setToast(''), 3000); };
+
+            if (loading) return <div className="h-screen flex items-center justify-center"><div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div></div>;
 
             if (!user) return (
                 <div className="h-screen flex flex-col items-center justify-center bg-emerald-900 p-6">
                     <div className="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-sm w-full fade-in">
-                        <div className="bg-emerald-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i data-lucide="lock" className="text-emerald-700 w-10 h-10"></i>
-                        </div>
-                        <h1 className="text-2xl font-bold text-gray-800 mb-2">فیکٹری لاگ ان</h1>
-                        <p className="text-gray-500 mb-8 text-sm">اپنے گوگل اکاؤنٹ کے ذریعے لاگ ان کریں تاکہ آپ کا ڈیٹا محفوظ رہے</p>
-                        <button 
-                            onClick={handleGoogleLogin}
-                            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 py-3 px-4 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm active:scale-95"
-                        >
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" />
-                            گوگل کے ساتھ لاگ ان کریں
+                        <h1 className="text-2xl font-bold text-gray-800 mb-6">فیکٹری لاگ ان</h1>
+                        <button onClick={() => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())} className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" /> گوگل لاگ ان
                         </button>
                     </div>
                 </div>
@@ -222,168 +142,100 @@
                 <div className="min-h-screen">
                     <header className="bg-emerald-800 text-white p-4 shadow-lg flex justify-between items-center sticky top-0 z-20 no-print">
                         <div className="flex items-center gap-3">
-                            <div onClick={handleLogout} className="cursor-pointer">
-                                <img src={user.photoURL} className="w-8 h-8 rounded-full border-2 border-emerald-400" />
-                            </div>
-                            <h1 className="text-lg font-bold hidden md:block">فیکٹری مینجمنٹ</h1>
+                            <img src={user.photoURL} className="w-8 h-8 rounded-full border-2 border-emerald-400" />
+                            <h1 className="text-lg font-bold">فیکٹری مینجمنٹ</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="text-black px-2 py-1 rounded text-sm outline-none shadow-inner" />
-                            <button onClick={handleLogout} className="p-1 hover:bg-emerald-700 rounded transition" title="لاگ آؤٹ">
-                                <i data-lucide="log-out" className="w-5 h-5"></i>
-                            </button>
+                            <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="text-black px-2 py-1 rounded text-sm outline-none" />
+                            <button onClick={() => auth.signOut()} className="p-1 hover:bg-emerald-700 rounded transition"><i data-lucide="log-out" className="w-5 h-5"></i></button>
                         </div>
                     </header>
 
                     <nav className="flex bg-white shadow-sm sticky top-[68px] z-10 no-print">
-                        <button onClick={() => setActiveTab('dashboard')} className={`flex-1 p-4 border-b-4 ${activeTab === 'dashboard' ? 'border-emerald-600 text-emerald-700 bg-emerald-50 font-bold' : 'border-transparent text-gray-500'}`}>ڈیش بورڈ</button>
-                        <button onClick={() => { setActiveTab('entry'); setEditingItem(null); }} className={`flex-1 p-4 border-b-4 ${activeTab === 'entry' ? 'border-emerald-600 text-emerald-700 bg-emerald-50 font-bold' : 'border-transparent text-gray-500'}`}>انٹری</button>
-                        <button onClick={() => setActiveTab('records')} className={`flex-1 p-4 border-b-4 ${activeTab === 'records' ? 'border-emerald-600 text-emerald-700 bg-emerald-50 font-bold' : 'border-transparent text-gray-500'}`}>ریکارڈ</button>
+                        {['dashboard', 'entry', 'records'].map(t => (
+                            <button key={t} onClick={() => {setActiveTab(t); setEditingItem(null);}} className={`flex-1 p-4 border-b-4 ${activeTab === t ? 'border-emerald-600 text-emerald-700 bg-emerald-50 font-bold' : 'border-transparent text-gray-500'}`}>
+                                {t === 'dashboard' ? 'ڈیش بورڈ' : t === 'entry' ? 'انٹری' : 'ریکارڈ'}
+                            </button>
+                        ))}
                     </nav>
 
                     <main className="max-w-4xl mx-auto p-4 md:p-6">
                         {activeTab === 'dashboard' && (
                             <div className="space-y-6 fade-in">
                                 <div className="flex justify-between items-center no-print">
-                                    <h2 className="text-lg font-bold text-gray-700">رپورٹ خلاصہ</h2>
-                                    <button onClick={() => window.print()} className="bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow hover:bg-gray-900 transition"><i data-lucide="printer" className="w-4 h-4"></i> پرنٹ</button>
+                                    <h2 className="text-lg font-bold text-gray-700">رپورٹ</h2>
+                                    <button onClick={() => window.print()} className="bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2"><i data-lucide="printer" className="w-4 h-4"></i> پرنٹ</button>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="bg-white p-6 rounded-2xl shadow-md border-r-8 border-indigo-600">
-                                        <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">گودام سٹاک</h3>
-                                        <p className="text-3xl font-black text-indigo-700 mt-2">{stats.whBags} بورے</p>
-                                        <p className="text-xs text-gray-400 mt-1">{stats.whWeight.toLocaleString()} کلو گرام</p>
-                                    </div>
-                                    <div className="bg-white p-6 rounded-2xl shadow-md border-r-8 border-emerald-600">
-                                        <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">پروڈکشن ({selectedMonth})</h3>
-                                        <p className="text-3xl font-black text-emerald-700 mt-2">{stats.prodDoz} درجن</p>
-                                        <p className="text-xs text-gray-400 mt-1">{stats.prodWeight.toLocaleString()} کلو گرام</p>
-                                    </div>
-                                    <div className="bg-white p-6 rounded-2xl shadow-md border-r-8 border-red-600">
-                                        <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider">ماہانہ کل خرچہ</h3>
-                                        <p className="text-3xl font-black text-red-600 mt-2">Rs {stats.totalExp.toLocaleString()}</p>
-                                    </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <StatCard title="کل سرمایہ" val={`Rs ${stats.totalInv.toLocaleString()}`} color="border-emerald-600" text="text-emerald-700" />
+                                    <StatCard title="گودام سٹاک" val={`${stats.whBags} بورے`} color="border-indigo-600" text="text-indigo-700" />
+                                    <StatCard title="پروڈکشن" val={`${stats.prodDoz} درجن`} color="border-amber-600" text="text-amber-700" />
+                                    <StatCard title="ماہانہ خرچہ" val={`Rs ${stats.totalExp.toLocaleString()}`} color="border-red-600" text="text-red-700" />
                                 </div>
                             </div>
                         )}
 
                         {activeTab === 'entry' && (
-                            <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl border fade-in no-print">
-                                <div className="flex flex-wrap gap-2 mb-10 justify-center">
-                                    {[
-                                        {id: 'warehouse', label: 'گودام'}, {id: 'yarn', label: 'فیکٹری آمد'}, 
-                                        {id: 'production', label: 'پروڈکشن'}, {id: 'packing', label: 'پیکنگ'}, 
-                                        {id: 'machine', label: 'مشین بل'}, {id: 'salary', label: 'تنخواہ'}
-                                    ].map(t => (
-                                        <button key={t.id} onClick={() => setEntryType(t.id)} className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${entryType === t.id ? 'bg-emerald-600 text-white shadow-lg scale-105' : 'bg-gray-100 text-gray-500'}`}>
-                                            {t.label}
+                            <div className="bg-white p-6 rounded-3xl shadow-xl border fade-in no-print">
+                                <div className="flex flex-wrap gap-2 mb-8 justify-center">
+                                    {['investment', 'warehouse', 'yarn', 'production', 'packing', 'machine', 'salary'].map(t => (
+                                        <button key={t} onClick={() => setEntryType(t)} className={`px-4 py-2 rounded-full text-xs font-bold ${entryType === t ? 'bg-emerald-600 text-white shadow-lg' : 'bg-gray-100 text-gray-500'}`}>
+                                            {t === 'investment' ? 'سرمایہ' : t === 'warehouse' ? 'گودام' : t === 'yarn' ? 'فیکٹری آمد' : t === 'production' ? 'پروڈکشن' : t === 'packing' ? 'پیکنگ' : t === 'machine' ? 'مشین' : 'تنخواہ'}
                                         </button>
                                     ))}
                                 </div>
-
-                                <h2 className="text-xl font-bold text-gray-800 mb-6 border-b pb-3 flex items-center gap-2">
-                                    <i data-lucide="plus-circle" className="text-emerald-600"></i> {editingItem ? 'ریکارڈ میں تبدیلی' : 'نیا ریکارڈ درج کریں'}
-                                </h2>
-
                                 <form onSubmit={handleSave} className="space-y-6">
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-bold text-gray-400">تاریخ منتخب کریں</label>
-                                        <input type="date" name="date" required defaultValue={editingItem?.date || new Date().toISOString().split('T')[0]} className="w-full p-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none" />
-                                    </div>
-
-                                    {entryType === 'warehouse' && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <input type="number" name="bags" placeholder="بورے" required defaultValue={editingItem?.bags || ''} className="w-full p-4 border rounded-xl" />
-                                            <input type="number" name="weightPerBag" placeholder="فی بوری وزن" defaultValue={editingItem?.weightPerBag || '30'} className="w-full p-4 border rounded-xl" />
-                                        </div>
-                                    )}
-
-                                    {(entryType === 'production' || entryType === 'packing') && (
-                                        <div className="space-y-4">
-                                            <select name="variety" defaultValue={editingItem?.variety || 'سمال ہاف'} className="w-full p-4 border rounded-xl bg-gray-50">
-                                                {gloveVarieties.map(v => <option key={v} value={v}>{v}</option>)}
-                                            </select>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <input type="number" name="dozens" placeholder="درجن" required defaultValue={editingItem?.dozens || ''} className="w-full p-4 border rounded-xl" />
-                                                <input type="number" name={entryType === 'production' ? 'weight' : 'cost'} placeholder={entryType === 'production' ? 'وزن' : 'خرچہ'} required defaultValue={editingItem?.[entryType === 'production' ? 'weight' : 'cost'] || ''} className="w-full p-4 border rounded-xl" />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {entryType === 'yarn' && (
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <input type="number" name="bags" placeholder="بورے" required defaultValue={editingItem?.bags || ''} className="w-full p-4 border rounded-xl" />
-                                            <input type="number" name="weight" placeholder="کل وزن" required defaultValue={editingItem?.weight || ''} className="w-full p-4 border rounded-xl" />
-                                        </div>
-                                    )}
-
-                                    {entryType === 'machine' && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <input type="number" name="cost" placeholder="رقم" required defaultValue={editingItem?.cost || ''} className="w-full p-4 border rounded-xl" />
-                                            <input type="text" name="details" placeholder="تفصیل" required defaultValue={editingItem?.details || ''} className="w-full p-4 border rounded-xl" />
-                                        </div>
-                                    )}
-
-                                    {entryType === 'salary' && (
-                                        <div className="space-y-4">
-                                            <input type="text" name="workerName" placeholder="کاریگر کا نام" required defaultValue={editingItem?.workerName || ''} className="w-full p-4 border rounded-xl" />
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <input type="number" name="amount" placeholder="رقم" required defaultValue={editingItem?.amount || ''} className="w-full p-4 border rounded-xl" />
-                                                <select name="salaryType" className="w-full p-4 border rounded-xl"><option value="تنخواہ">تنخواہ</option><option value="ایڈوانس">ایڈوانس</option></select>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <button type="submit" className="w-full bg-emerald-700 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-emerald-800 transition transform active:scale-95">
-                                        محفوظ کریں
-                                    </button>
+                                    <input type="date" name="date" required defaultValue={editingItem?.date || new Date().toISOString().split('T')[0]} className="w-full p-3 border rounded-xl bg-gray-50" />
+                                    {entryType === 'investment' && <><input type="number" name="amount" placeholder="رقم" required defaultValue={editingItem?.amount || ''} className="w-full p-4 border rounded-xl" /><input type="text" name="details" placeholder="تفصیل (کس نے دیا یا کہاں لگا)" required defaultValue={editingItem?.details || ''} className="w-full p-4 border rounded-xl" /></>}
+                                    {entryType === 'warehouse' && <><input type="number" name="bags" placeholder="بورے" required defaultValue={editingItem?.bags || ''} className="w-full p-4 border rounded-xl" /><input type="number" name="weightPerBag" placeholder="فی بوری وزن" defaultValue={editingItem?.weightPerBag || '30'} className="w-full p-4 border rounded-xl" /></>}
+                                    {entryType === 'production' && <><select name="variety" defaultValue={editingItem?.variety || 'سمال ہاف'} className="w-full p-4 border rounded-xl">{gloveVarieties.map(v => <option key={v} value={v}>{v}</option>)}</select><input type="number" name="dozens" placeholder="درجن" required className="w-full p-4 border rounded-xl" /><input type="number" name="weight" placeholder="وزن" required className="w-full p-4 border rounded-xl" /></>}
+                                    {entryType === 'packing' && <><select name="variety" defaultValue={editingItem?.variety || 'سمال ہاف'} className="w-full p-4 border rounded-xl">{gloveVarieties.map(v => <option key={v} value={v}>{v}</option>)}</select><input type="number" name="dozens" placeholder="درجن" required className="w-full p-4 border rounded-xl" /><input type="number" name="cost" placeholder="خرچہ" required className="w-full p-4 border rounded-xl" /></>}
+                                    {entryType === 'machine' && <><input type="number" name="cost" placeholder="رقم" required className="w-full p-4 border rounded-xl" /><input type="text" name="details" placeholder="تفصیل" required className="w-full p-4 border rounded-xl" /></>}
+                                    {entryType === 'salary' && <><input type="text" name="workerName" placeholder="نام" required className="w-full p-4 border rounded-xl" /><input type="number" name="amount" placeholder="رقم" required className="w-full p-4 border rounded-xl" /><select name="salaryType" className="w-full p-4 border rounded-xl"><option value="تنخواہ">تنخواہ</option><option value="ایڈوانس">ایڈوانس</option></select></>}
+                                    {entryType === 'yarn' && <><input type="number" name="bags" placeholder="بورے" required className="w-full p-4 border rounded-xl" /><input type="number" name="weight" placeholder="وزن" required className="w-full p-4 border rounded-xl" /></>}
+                                    <button type="submit" className="w-full bg-emerald-700 text-white p-4 rounded-2xl font-bold shadow-lg hover:bg-emerald-800 transition">محفوظ کریں</button>
                                 </form>
                             </div>
                         )}
 
                         {activeTab === 'records' && (
-                            <div className="bg-white p-4 rounded-2xl shadow-md border fade-in overflow-hidden">
+                            <div className="bg-white p-4 rounded-2xl shadow-md border fade-in">
                                 <div className="flex justify-between items-center mb-6 no-print gap-2">
                                     <select value={entryType} onChange={e => setEntryType(e.target.value)} className="p-2 border rounded-xl bg-gray-50 flex-1 outline-none text-sm font-bold shadow-inner">
-                                        <option value="warehouse">گودام</option><option value="yarn">فیکٹری آمد</option>
-                                        <option value="production">پروڈکشن</option><option value="packing">پیکنگ</option>
-                                        <option value="machine">مشین</option><option value="salary">تنخواہ</option>
+                                        <option value="investment">سرمایہ کاری</option><option value="warehouse">گودام</option><option value="yarn">فیکٹری آمد</option><option value="production">پروڈکشن</option><option value="packing">پیکنگ</option><option value="machine">مشین</option><option value="salary">تنخواہ</option>
                                     </select>
-                                    <button onClick={() => window.print()} className="p-2 bg-gray-100 rounded-xl shadow hover:bg-gray-200 transition"><i data-lucide="printer" className="w-5 h-5"></i></button>
+                                    <button onClick={() => window.print()} className="p-2 bg-gray-100 rounded-xl"><i data-lucide="printer" className="w-5 h-5"></i></button>
                                 </div>
-
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-right print-table">
-                                        <thead>
-                                            <tr className="bg-gray-50 border-b">
-                                                <th className="p-3 text-xs font-bold text-gray-500">تاریخ</th>
-                                                {entryType === 'production' && <><th className="p-3 text-xs font-bold text-gray-500">ورائٹی</th><th className="p-3 text-xs font-bold text-gray-500">درجن</th><th className="p-3 text-xs font-bold text-gray-500">وزن</th></>}
-                                                {entryType === 'warehouse' && <><th className="p-3 text-xs font-bold text-gray-500">بورے</th><th className="p-3 text-xs font-bold text-gray-500">وزن</th></>}
-                                                {entryType === 'yarn' && <><th className="p-3 text-xs font-bold text-gray-500">بورے</th><th className="p-3 text-xs font-bold text-gray-500">وزن</th></>}
-                                                {entryType === 'packing' && <><th className="p-3 text-xs font-bold text-gray-500">ورائٹی</th><th className="p-3 text-xs font-bold text-gray-500">درجن</th><th className="p-3 text-xs font-bold text-gray-500">رقم</th></>}
-                                                {entryType === 'machine' && <><th className="p-3 text-xs font-bold text-gray-500">تفصیل</th><th className="p-3 text-xs font-bold text-gray-500">رقم</th></>}
-                                                {entryType === 'salary' && <><th className="p-3 text-xs font-bold text-gray-500">نام</th><th className="p-3 text-xs font-bold text-gray-500">رقم</th></>}
-                                                <th className="p-3 text-xs font-bold text-gray-500 no-print">ایکشن</th>
+                                        <thead className="bg-gray-50 border-b">
+                                            <tr>
+                                                <th className="p-3 text-xs font-bold">تاریخ</th>
+                                                {entryType === 'investment' && <><th className="p-3 text-xs font-bold">تفصیل</th><th className="p-3 text-xs font-bold">رقم</th></>}
+                                                {entryType === 'production' && <><th className="p-3 text-xs font-bold">ورائٹی</th><th className="p-3 text-xs font-bold">درجن</th><th className="p-3 text-xs font-bold">وزن</th></>}
+                                                {entryType === 'warehouse' && <><th className="p-3 text-xs font-bold">بورے</th><th className="p-3 text-xs font-bold">وزن</th></>}
+                                                {entryType === 'packing' && <><th className="p-3 text-xs font-bold">ورائٹی</th><th className="p-3 text-xs font-bold">درجن</th><th className="p-3 text-xs font-bold">رقم</th></>}
+                                                {entryType === 'machine' && <><th className="p-3 text-xs font-bold">تفصیل</th><th className="p-3 text-xs font-bold">رقم</th></>}
+                                                {entryType === 'salary' && <><th className="p-3 text-xs font-bold">نام</th><th className="p-3 text-xs font-bold">رقم</th></>}
+                                                <th className="p-3 text-xs font-bold no-print">ایکشن</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {currentList.length > 0 ? currentList.map(item => (
+                                            {currentList.map(item => (
                                                 <tr key={item.id} className="border-b hover:bg-gray-50 transition">
-                                                    <td className="p-3 text-xs whitespace-nowrap">{item.date}</td>
-                                                    {entryType === 'production' && <><td className="p-3 text-xs">{item.variety}</td><td className="p-3 font-bold text-gray-900">{item.dozens}</td><td className="p-3 text-xs">{item.weight} کلو</td></>}
-                                                    {entryType === 'warehouse' && <><td className="p-3 font-bold text-indigo-700">{item.bags}</td><td className="p-3 text-xs">{item.totalWeight} کلو</td></>}
-                                                    {entryType === 'yarn' && <><td className="p-3 font-bold text-amber-600">{item.bags}</td><td className="p-3 text-xs">{item.weight} کلو</td></>}
+                                                    <td className="p-3 text-xs">{item.date}</td>
+                                                    {entryType === 'investment' && <><td className="p-3 text-xs">{item.details}</td><td className="p-3 font-bold text-emerald-600">Rs {item.amount}</td></>}
+                                                    {entryType === 'production' && <><td className="p-3 text-xs">{item.variety}</td><td className="p-3 font-bold">{item.dozens}</td><td className="p-3 text-xs">{item.weight} کلو</td></>}
+                                                    {entryType === 'warehouse' && <><td className="p-3 font-bold">{item.bags}</td><td className="p-3 text-xs">{item.totalWeight} کلو</td></>}
                                                     {entryType === 'packing' && <><td className="p-3 text-xs">{item.variety}</td><td className="p-3 text-xs font-bold">{item.dozens}</td><td className="p-3 font-bold text-red-600">Rs {item.cost}</td></>}
                                                     {entryType === 'machine' && <><td className="p-3 text-xs">{item.details}</td><td className="p-3 font-bold text-red-600">Rs {item.cost}</td></>}
                                                     {entryType === 'salary' && <><td className="p-3 text-xs font-bold">{item.workerName}</td><td className="p-3 font-bold text-red-600">Rs {item.amount}</td></>}
                                                     <td className="p-3 no-print flex gap-3">
-                                                        <button onClick={() => { setEditingItem(item); setActiveTab('entry'); }} className="text-blue-500 hover:text-blue-700 transition"><i data-lucide="edit-2" className="w-4 h-4"></i></button>
-                                                        <button onClick={() => db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection(entryType).doc(item.id).delete()} className="text-red-400 hover:text-red-600 transition"><i data-lucide="trash-2" className="w-4 h-4"></i></button>
+                                                        <button onClick={() => { setEditingItem(item); setActiveTab('entry'); }} className="text-blue-500"><i data-lucide="edit-2" className="w-4 h-4"></i></button>
+                                                        <button onClick={() => db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection(entryType).doc(item.id).delete()} className="text-red-400"><i data-lucide="trash-2" className="w-4 h-4"></i></button>
                                                     </td>
                                                 </tr>
-                                            )) : (
-                                                <tr><td colSpan="10" className="p-10 text-center text-gray-300 italic">کوئی ریکارڈ نہیں ملا</td></tr>
-                                            )}
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
@@ -391,15 +243,24 @@
                         )}
                     </main>
 
-                    {toast && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-3 rounded-full shadow-2xl z-50 animate-bounce text-sm">{toast}</div>}
+                    {toast && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-3 rounded-full shadow-2xl z-50 text-sm">{toast}</div>}
                 </div>
             );
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        function StatCard({ title, val, color, text }) {
+            return (
+                <div className={`bg-white p-6 rounded-2xl shadow-md border-r-8 ${color}`}>
+                    <h3 className="text-gray-400 text-xs font-bold uppercase">{title}</h3>
+                    <p className={`text-2xl font-black ${text} mt-2`}>{val}</p>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
+
 
 ```
