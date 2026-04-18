@@ -3,7 +3,7 @@
 <html lang="ur" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>فیکٹری مینجمنٹ سسٹم پرو</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
             .no-print { display: none !important; } 
             body { background-color: white; } 
             .print-table { width: 100%; border-collapse: collapse; } 
-            .print-table th, .print-table td { border: 1px solid #cbd5e1; padding: 12px; text-align: right; } 
+            .print-table th, .print-table td { border: 1px solid #cbd5e1; padding: 10px; text-align: right; font-size: 14px;} 
             .sidebar-open { margin-right: 0 !important; }
         }
         
@@ -23,7 +23,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
         /* کسٹم سکرول بار */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
@@ -67,23 +67,23 @@
         function App() {
             const [user, setUser] = useState(null);
             const [loading, setLoading] = useState(true);
-            const [activePage, setActivePage] = useState('dashboard'); // راؤٹنگ کے لیے اسٹیٹ
+            const [activePage, setActivePage] = useState('dashboard');
             const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
             const [toast, setToast] = useState('');
-            const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+            
+            // موبائل سکرین چیک کرنے کے لیے
+            const isMobileInit = window.innerWidth < 768;
+            const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobileInit);
 
-            // ڈیٹا اسٹیٹس
             const [dbData, setDbData] = useState({
                 warehouse: [], yarn: [], production: [], packing: [], machine: [], salary: [], investment: []
             });
 
-            // آتھنٹیکیشن
             useEffect(() => {
                 const unsubscribe = auth.onAuthStateChanged(u => { setUser(u); setLoading(false); });
                 return () => unsubscribe();
             }, []);
 
-            // ڈیٹا فیچ کرنا
             useEffect(() => {
                 if (!user) return;
                 const collections = ['warehouse', 'yarn', 'production', 'packing', 'machine', 'salary', 'investment'];
@@ -102,27 +102,48 @@
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
             const showToast = (m) => { setToast(m); setTimeout(() => setToast(''), 3000); };
 
-            // لاگ ان سکرین
+            const handleMenuClick = (id) => {
+                setActivePage(id);
+                if (window.innerWidth < 768) {
+                    setIsSidebarOpen(false); // موبائل پر کلک کے بعد سائیڈ بار بند کر دیں
+                }
+            };
+
             if (loading) return <div className="h-screen flex items-center justify-center"><div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div></div>;
             if (!user) return <LoginScreen auth={auth} />;
 
-            // مینو کے آئٹمز
             const menuItems = [
                 { id: 'dashboard', label: 'ڈیش بورڈ', icon: 'layout-dashboard' },
                 { id: 'entry', label: 'ڈیٹا انٹری کریں', icon: 'plus-circle' },
                 { id: 'records', label: 'تمام ریکارڈز دیکھیں', icon: 'list' },
-                { id: 'investment', label: 'سرمایہ کاری', icon: 'briefcase' },
-                { id: 'settings', label: 'ترتیبات', icon: 'settings' }
+                { id: 'investment', label: 'سرمایہ کاری', icon: 'briefcase' }
             ];
 
             return (
-                <div className="flex h-screen overflow-hidden">
+                <div className="flex h-screen overflow-hidden bg-gray-50">
+                    {/* موبائل اوورلے (Mobile Overlay) */}
+                    {isSidebarOpen && (
+                        <div 
+                            className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden transition-opacity" 
+                            onClick={() => setIsSidebarOpen(false)}
+                        ></div>
+                    )}
+
                     {/* سائیڈ بار (Sidebar) */}
-                    <aside className={`bg-emerald-900 text-white transition-all duration-300 flex flex-col no-print ${isSidebarOpen ? 'w-64' : 'w-20'} shadow-2xl z-30`}>
+                    <aside className={`fixed md:relative top-0 right-0 h-full bg-emerald-900 text-white transition-transform duration-300 flex flex-col no-print z-40 shadow-2xl 
+                        ${isSidebarOpen ? 'translate-x-0 w-64' : 'translate-x-full md:translate-x-0 md:w-20'}`}>
+                        
                         <div className="p-4 flex items-center justify-between border-b border-emerald-800">
                             {isSidebarOpen && <h1 className="font-bold text-lg whitespace-nowrap overflow-hidden">فیکٹری مینجمنٹ</h1>}
-                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-emerald-800 rounded-lg hover:bg-emerald-700">
-                                <i data-lucide="menu"></i>
+                            
+                            {/* ڈیسک ٹاپ کے لیے مینو بٹن */}
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-emerald-800 rounded-lg hover:bg-emerald-700 hidden md:block">
+                                <i data-lucide="menu" className="w-5 h-5"></i>
+                            </button>
+                            
+                            {/* موبائل کے لیے کلوز بٹن */}
+                            <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-emerald-800 rounded-lg hover:bg-emerald-700 md:hidden">
+                                <i data-lucide="x" className="w-5 h-5"></i>
                             </button>
                         </div>
                         
@@ -130,7 +151,7 @@
                             {menuItems.map(item => (
                                 <button 
                                     key={item.id} 
-                                    onClick={() => setActivePage(item.id)}
+                                    onClick={() => handleMenuClick(item.id)}
                                     className={`w-full flex items-center px-4 py-3 transition-colors ${activePage === item.id ? 'bg-emerald-700 border-r-4 border-emerald-400' : 'hover:bg-emerald-800 border-r-4 border-transparent'}`}
                                     title={item.label}
                                 >
@@ -154,28 +175,33 @@
                     </aside>
 
                     {/* مرکزی حصہ (Main Content Area) */}
-                    <div className="flex-1 flex flex-col overflow-hidden relative">
+                    <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
                         {/* ٹاپ بار */}
-                        <header className="bg-white shadow-sm p-4 flex justify-between items-center z-20 no-print">
-                            <h2 className="text-xl font-bold text-gray-800">
-                                {menuItems.find(m => m.id === activePage)?.label}
-                            </h2>
+                        <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center z-20 no-print sticky top-0">
                             <div className="flex items-center gap-3">
-                                <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="border border-gray-300 px-3 py-2 rounded-lg text-sm outline-none focus:border-emerald-500 bg-gray-50" />
-                                <button onClick={() => window.print()} className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 text-gray-700" title="پرنٹ کریں">
-                                    <i data-lucide="printer"></i>
+                                {/* موبائل کے لیے مینو بٹن */}
+                                <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg md:hidden">
+                                    <i data-lucide="menu" className="w-6 h-6"></i>
+                                </button>
+                                <h2 className="text-lg md:text-xl font-bold text-gray-800 truncate">
+                                    {menuItems.find(m => m.id === activePage)?.label}
+                                </h2>
+                            </div>
+                            <div className="flex items-center gap-2 md:gap-3">
+                                <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="border border-gray-300 px-2 md:px-3 py-1.5 md:py-2 rounded-lg text-sm outline-none focus:border-emerald-500 bg-gray-50 w-[120px] md:w-auto" />
+                                <button onClick={() => window.print()} className="bg-gray-100 p-2 rounded-lg hover:bg-gray-200 text-gray-700 hidden md:block" title="پرنٹ کریں">
+                                    <i data-lucide="printer" className="w-5 h-5"></i>
                                 </button>
                             </div>
                         </header>
 
                         {/* پیج کا مواد (Page Content Switcher) */}
-                        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50 print:bg-white print:p-0">
-                            <div className="fade-in max-w-6xl mx-auto">
+                        <main className="flex-1 overflow-y-auto p-3 md:p-6 print:p-0">
+                            <div className="fade-in max-w-6xl mx-auto pb-20 md:pb-0">
                                 {activePage === 'dashboard' && <DashboardPage dbData={dbData} month={selectedMonth} />}
                                 {activePage === 'entry' && <EntryPage db={db} user={user} appId={appId} showToast={showToast} gloveVarieties={gloveVarieties} />}
                                 {activePage === 'records' && <RecordsPage dbData={dbData} db={db} user={user} appId={appId} month={selectedMonth} showToast={showToast} setActivePage={setActivePage} />}
                                 {activePage === 'investment' && <InvestmentPage dbData={dbData} db={db} user={user} appId={appId} showToast={showToast} />}
-                                {activePage === 'settings' && <div className="p-8 text-center text-gray-500 bg-white rounded-2xl border">مزید ترتیبات جلد آرہی ہیں...</div>}
                             </div>
                         </main>
                     </div>
@@ -187,7 +213,7 @@
         }
 
         // ==========================================
-        // 2. لاگ ان سکرین (Login Screen)
+        // 2. لاگ ان سکرین
         // ==========================================
         function LoginScreen({ auth }) {
             const [errorMsg, setErrorMsg] = useState('');
@@ -197,27 +223,23 @@
                 const provider = new firebase.auth.GoogleAuthProvider();
                 auth.signInWithPopup(provider).catch(err => {
                     if (err.code === 'auth/unauthorized-domain') {
-                        setErrorMsg('اس ونڈو (پریویو) کی ڈومین کو فائر بیس میں اجازت نہیں ہے۔ گٹ ہب پر یہ بالکل ٹھیک چلے گا۔');
+                        setErrorMsg('اس ونڈو کی ڈومین کو اجازت نہیں ہے۔ گٹ ہب پر یہ ٹھیک چلے گا۔');
                     } else if (err.code === 'auth/popup-blocked') {
-                        setErrorMsg('براؤزر نے لاگ ان ونڈو کو بلاک کر دیا ہے۔');
+                        setErrorMsg('براؤزر نے پاپ اپ کو بلاک کر دیا ہے۔');
                     } else {
                         setErrorMsg(err.message);
                     }
                 });
             };
 
-            const loginAnonymously = () => {
-                auth.signInAnonymously().catch(err => setErrorMsg(err.message));
-            };
-
             return (
                 <div className="h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-                    <div className="bg-white p-10 rounded-3xl shadow-xl text-center max-w-md w-full border-t-8 border-emerald-600">
-                        <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-100">
-                            <i data-lucide="factory" className="text-emerald-600 w-10 h-10"></i>
+                    <div className="bg-white p-6 md:p-10 rounded-3xl shadow-xl text-center max-w-md w-full border-t-8 border-emerald-600">
+                        <div className="w-16 h-16 md:w-20 md:h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-100">
+                            <i data-lucide="factory" className="text-emerald-600 w-8 h-8 md:w-10 md:h-10"></i>
                         </div>
-                        <h1 className="text-2xl font-black text-gray-800 mb-2">فیکٹری مینجمنٹ ٹول</h1>
-                        <p className="text-gray-500 mb-6 text-sm">اپنے محفوظ سسٹم میں داخل ہونے کے لیے لاگ ان کریں</p>
+                        <h1 className="text-xl md:text-2xl font-black text-gray-800 mb-2">فیکٹری مینجمنٹ ٹول</h1>
+                        <p className="text-gray-500 mb-6 text-xs md:text-sm">اپنے محفوظ سسٹم میں داخل ہونے کے لیے لاگ ان کریں</p>
                         
                         {errorMsg && (
                             <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-lg font-bold">
@@ -225,14 +247,14 @@
                             </div>
                         )}
 
-                        <button onClick={loginWithGoogle} className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition shadow-sm active:scale-95">
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-6 h-6" /> 
+                        <button onClick={loginWithGoogle} className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm active:scale-95 text-sm md:text-base">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 md:w-6 md:h-6" /> 
                             گوگل اکاؤنٹ سے لاگ ان کریں
                         </button>
                         
                         <div className="mt-6 pt-4 border-t border-gray-100">
-                            <button onClick={loginAnonymously} className="text-sm text-gray-500 hover:text-emerald-700 transition font-bold underline">
-                                صرف اس ونڈو میں ٹیسٹ کرنے کے لیے عارضی لاگ ان کریں
+                            <button onClick={() => auth.signInAnonymously().catch(e=>setErrorMsg(e.message))} className="text-xs text-gray-500 hover:text-emerald-700 transition font-bold underline">
+                                عارضی ٹیسٹ لاگ ان کریں
                             </button>
                         </div>
                     </div>
@@ -241,7 +263,7 @@
         }
 
         // ==========================================
-        // 3. ڈیش بورڈ پیج (Dashboard Page)
+        // 3. ڈیش بورڈ پیج
         // ==========================================
         function DashboardPage({ dbData, month }) {
             const stats = useMemo(() => {
@@ -263,18 +285,18 @@
             }, [dbData, month]);
 
             return (
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-4 md:space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                         <StatCard title="گودام سٹاک" val={`${stats.whBags} بورے`} sub={`${stats.whWeight} کلو`} icon="home" color="bg-indigo-600" />
                         <StatCard title="ماہانہ پروڈکشن" val={`${stats.prodDoz} درجن`} sub={`${stats.prodWeight} کلو`} icon="box" color="bg-emerald-600" />
                         <StatCard title="ماہانہ پیکنگ" val={`${stats.packDoz} درجن`} sub="تیار مال" icon="package" color="bg-purple-600" />
                         <StatCard title="ماہانہ خرچہ" val={`Rs ${stats.totalExp.toLocaleString()}`} sub="بل + تنخواہ + پیکنگ" icon="trending-down" color="bg-red-600" />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="pie-chart" className="text-gray-400"></i> فیکٹری کی مجموعی پوزیشن</h3>
-                            <div className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mt-4 md:mt-6">
+                        <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 className="font-bold text-base md:text-lg mb-4 flex items-center gap-2"><i data-lucide="pie-chart" className="text-gray-400 w-5 h-5"></i> فیکٹری کی مجموعی پوزیشن</h3>
+                            <div className="space-y-3 md:space-y-4 text-sm md:text-base">
                                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                     <span className="text-gray-600">کل سرمایہ کاری</span>
                                     <span className="font-bold text-emerald-700">Rs {stats.totalInv.toLocaleString()}</span>
@@ -291,10 +313,11 @@
         }
 
         // ==========================================
-        // 4. انٹری پیج (Data Entry Page)
+        // 4. انٹری پیج
         // ==========================================
         function EntryPage({ db, user, appId, showToast, gloveVarieties }) {
             const [entryType, setEntryType] = useState('production');
+            const [editingItem, setEditingItem] = useState(null);
 
             const handleSave = async (e) => {
                 e.preventDefault();
@@ -321,65 +344,65 @@
             ];
 
             return (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 max-w-3xl mx-auto">
-                    <div className="flex flex-wrap gap-2 mb-8 justify-center bg-gray-50 p-2 rounded-xl border">
+                <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 max-w-3xl mx-auto">
+                    <div className="flex flex-wrap gap-2 mb-6 md:mb-8 justify-center bg-gray-50 p-2 rounded-xl border">
                         {entryOptions.map(t => (
-                            <button key={t.id} onClick={() => setEntryType(t.id)} className={`px-4 py-2 rounded-lg text-sm font-bold flex-1 text-center transition-all ${entryType === t.id ? `bg-${t.color}-600 text-white shadow-md` : 'text-gray-500 hover:bg-gray-200'}`}>
+                            <button key={t.id} onClick={() => setEntryType(t.id)} className={`px-2 py-2 md:px-4 rounded-lg text-xs md:text-sm font-bold flex-grow text-center transition-all ${entryType === t.id ? `bg-${t.color}-600 text-white shadow-md` : 'text-gray-500 hover:bg-gray-200'}`}>
                                 {t.label}
                             </button>
                         ))}
                     </div>
 
-                    <form onSubmit={handleSave} className="space-y-6">
+                    <form onSubmit={handleSave} className="space-y-4 md:space-y-6">
                         <div>
-                            <label className="text-sm font-bold text-gray-500 mb-1 block">تاریخ درج کریں</label>
-                            <input type="date" name="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full p-3 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none" />
+                            <label className="text-xs md:text-sm font-bold text-gray-500 mb-1 block">تاریخ درج کریں</label>
+                            <input type="date" name="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full p-3 md:p-4 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none text-sm md:text-base" />
                         </div>
 
                         {entryType === 'warehouse' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input type="number" name="bags" placeholder="کتنے بورے آئے؟" required className="w-full p-4 border border-gray-300 rounded-xl" />
-                                <input type="number" name="weightPerBag" placeholder="فی بوری وزن (کلو)" defaultValue="30" className="w-full p-4 border border-gray-300 rounded-xl" />
+                                <input type="number" name="bags" placeholder="کتنے بورے آئے؟" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                <input type="number" name="weightPerBag" placeholder="فی بوری وزن (کلو)" defaultValue="30" className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
                             </div>
                         )}
 
                         {(entryType === 'production' || entryType === 'packing') && (
                             <div className="space-y-4">
-                                <select name="variety" className="w-full p-4 border border-gray-300 rounded-xl bg-gray-50">
+                                <select name="variety" className="w-full p-3 md:p-4 border border-gray-300 rounded-xl bg-gray-50 text-sm md:text-base">
                                     {gloveVarieties.map(v => <option key={v} value={v}>{v}</option>)}
                                 </select>
                                 <div className="grid grid-cols-2 gap-4">
-                                    <input type="number" name="dozens" placeholder="درجن" required className="w-full p-4 border border-gray-300 rounded-xl" />
-                                    <input type="number" name={entryType === 'production' ? 'weight' : 'cost'} placeholder={entryType === 'production' ? 'وزن' : 'خرچہ'} required className="w-full p-4 border border-gray-300 rounded-xl" />
+                                    <input type="number" name="dozens" placeholder="درجن" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                    <input type="number" name={entryType === 'production' ? 'weight' : 'cost'} placeholder={entryType === 'production' ? 'وزن' : 'خرچہ'} required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
                                 </div>
                             </div>
                         )}
 
                         {entryType === 'yarn' && (
                             <div className="grid grid-cols-2 gap-4">
-                                <input type="number" name="bags" placeholder="بورے" required className="w-full p-4 border border-gray-300 rounded-xl" />
-                                <input type="number" name="weight" placeholder="کل وزن" required className="w-full p-4 border border-gray-300 rounded-xl" />
+                                <input type="number" name="bags" placeholder="بورے" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                <input type="number" name="weight" placeholder="کل وزن" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
                             </div>
                         )}
 
                         {entryType === 'machine' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input type="number" name="cost" placeholder="رقم" required className="w-full p-4 border border-gray-300 rounded-xl" />
-                                <input type="text" name="details" placeholder="تفصیل" required className="w-full p-4 border border-gray-300 rounded-xl" />
+                                <input type="number" name="cost" placeholder="رقم" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                <input type="text" name="details" placeholder="تفصیل" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
                             </div>
                         )}
 
                         {entryType === 'salary' && (
                             <div className="space-y-4">
-                                <input type="text" name="workerName" placeholder="کاریگر کا نام" required className="w-full p-4 border border-gray-300 rounded-xl" />
+                                <input type="text" name="workerName" placeholder="کاریگر کا نام" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
                                 <div className="grid grid-cols-2 gap-4">
-                                    <input type="number" name="amount" placeholder="رقم" required className="w-full p-4 border border-gray-300 rounded-xl" />
-                                    <select name="salaryType" className="w-full p-4 border border-gray-300 rounded-xl"><option value="تنخواہ">تنخواہ</option><option value="ایڈوانس">ایڈوانس</option></select>
+                                    <input type="number" name="amount" placeholder="رقم" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                    <select name="salaryType" className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base"><option value="تنخواہ">تنخواہ</option><option value="ایڈوانس">ایڈوانس</option></select>
                                 </div>
                             </div>
                         )}
 
-                        <button type="submit" className="w-full bg-emerald-800 text-white p-4 rounded-xl font-bold shadow-lg hover:bg-emerald-900 transition active:scale-95 flex justify-center items-center gap-2">
+                        <button type="submit" className="w-full bg-emerald-800 text-white p-3 md:p-4 rounded-xl font-bold shadow-lg hover:bg-emerald-900 transition active:scale-95 flex justify-center items-center gap-2 text-sm md:text-base">
                             <i data-lucide="save" className="w-5 h-5"></i> ڈیٹا محفوظ کریں
                         </button>
                     </form>
@@ -388,7 +411,7 @@
         }
 
         // ==========================================
-        // 5. ریکارڈز پیج (Records Page)
+        // 5. ریکارڈز پیج
         // ==========================================
         function RecordsPage({ dbData, db, user, appId, month, showToast }) {
             const [viewType, setViewType] = useState('production');
@@ -406,9 +429,9 @@
             };
 
             return (
-                <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="mb-6 no-print">
-                        <select value={viewType} onChange={e => setViewType(e.target.value)} className="w-full md:w-auto p-3 border border-gray-300 rounded-xl bg-gray-50 outline-none font-bold text-emerald-900">
+                <div className="bg-white p-3 md:p-6 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="mb-4 md:mb-6 no-print flex justify-between gap-2 items-center">
+                        <select value={viewType} onChange={e => setViewType(e.target.value)} className="w-full md:w-auto p-2 md:p-3 border border-gray-300 rounded-xl bg-gray-50 outline-none font-bold text-emerald-900 text-sm md:text-base">
                             <option value="production">پروڈکشن کا ریکارڈ</option>
                             <option value="warehouse">گودام کا ریکارڈ</option>
                             <option value="yarn">فیکٹری آمد ریکارڈ</option>
@@ -416,38 +439,41 @@
                             <option value="machine">مشین خرچہ ریکارڈ</option>
                             <option value="salary">تنخواہ کھاتہ</option>
                         </select>
+                        <button onClick={() => window.print()} className="p-2 md:p-3 bg-gray-100 rounded-xl md:hidden text-gray-700 hover:bg-gray-200">
+                            <i data-lucide="printer" className="w-5 h-5"></i>
+                        </button>
                     </div>
 
-                    <div className="overflow-x-auto rounded-xl border border-gray-200">
-                        <table className="w-full text-right print-table">
+                    <div className="overflow-x-auto rounded-xl border border-gray-200 w-full max-w-full">
+                        <table className="w-full text-right print-table min-w-[600px] md:min-w-full">
                             <thead className="bg-gray-100 border-b border-gray-200">
                                 <tr>
-                                    <th className="p-4 text-sm font-bold text-gray-700">تاریخ</th>
-                                    {viewType === 'production' && <><th className="p-4 text-sm font-bold text-gray-700">ورائٹی</th><th className="p-4 text-sm font-bold text-gray-700">درجن</th><th className="p-4 text-sm font-bold text-gray-700">وزن</th></>}
-                                    {viewType === 'warehouse' && <><th className="p-4 text-sm font-bold text-gray-700">بورے</th><th className="p-4 text-sm font-bold text-gray-700">وزن</th></>}
-                                    {viewType === 'yarn' && <><th className="p-4 text-sm font-bold text-gray-700">بورے</th><th className="p-4 text-sm font-bold text-gray-700">وزن</th></>}
-                                    {viewType === 'packing' && <><th className="p-4 text-sm font-bold text-gray-700">ورائٹی</th><th className="p-4 text-sm font-bold text-gray-700">درجن</th><th className="p-4 text-sm font-bold text-gray-700">رقم</th></>}
-                                    {viewType === 'machine' && <><th className="p-4 text-sm font-bold text-gray-700">تفصیل</th><th className="p-4 text-sm font-bold text-gray-700">رقم</th></>}
-                                    {viewType === 'salary' && <><th className="p-4 text-sm font-bold text-gray-700">نام</th><th className="p-4 text-sm font-bold text-gray-700">رقم</th></>}
-                                    <th className="p-4 text-sm font-bold text-gray-700 no-print">ایکشن</th>
+                                    <th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">تاریخ</th>
+                                    {viewType === 'production' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">ورائٹی</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">درجن</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">وزن</th></>}
+                                    {viewType === 'warehouse' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">بورے</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">وزن</th></>}
+                                    {viewType === 'yarn' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">بورے</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">وزن</th></>}
+                                    {viewType === 'packing' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">ورائٹی</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">درجن</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">رقم</th></>}
+                                    {viewType === 'machine' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">تفصیل</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">رقم</th></>}
+                                    {viewType === 'salary' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">نام</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">رقم</th></>}
+                                    <th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700 no-print">ایکشن</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {currentList.map(item => (
                                     <tr key={item.id} className="border-b border-gray-100 hover:bg-emerald-50 transition">
-                                        <td className="p-4 text-sm whitespace-nowrap">{item.date}</td>
-                                        {viewType === 'production' && <><td className="p-4 text-sm">{item.variety}</td><td className="p-4 font-bold text-gray-900">{item.dozens}</td><td className="p-4 text-sm text-gray-500">{item.weight} کلو</td></>}
-                                        {viewType === 'warehouse' && <><td className="p-4 font-bold text-indigo-700">{item.bags}</td><td className="p-4 text-sm text-gray-500">{item.totalWeight} کلو</td></>}
-                                        {viewType === 'yarn' && <><td className="p-4 font-bold text-amber-600">{item.bags}</td><td className="p-4 text-sm text-gray-500">{item.weight} کلو</td></>}
-                                        {viewType === 'packing' && <><td className="p-4 text-sm">{item.variety}</td><td className="p-4 text-sm font-bold">{item.dozens}</td><td className="p-4 font-bold text-red-600">Rs {item.cost}</td></>}
-                                        {viewType === 'machine' && <><td className="p-4 text-sm">{item.details}</td><td className="p-4 font-bold text-red-600">Rs {item.cost}</td></>}
-                                        {viewType === 'salary' && <><td className="p-4 text-sm font-bold">{item.workerName} <span className="text-xs text-gray-400 font-normal">({item.salaryType})</span></td><td className="p-4 font-bold text-red-600">Rs {item.amount}</td></>}
-                                        <td className="p-4 no-print">
+                                        <td className="p-3 md:p-4 text-xs md:text-sm whitespace-nowrap">{item.date}</td>
+                                        {viewType === 'production' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.variety}</td><td className="p-3 md:p-4 font-bold text-gray-900 text-sm">{item.dozens}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.weight} کلو</td></>}
+                                        {viewType === 'warehouse' && <><td className="p-3 md:p-4 font-bold text-indigo-700 text-sm">{item.bags}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.totalWeight} کلو</td></>}
+                                        {viewType === 'yarn' && <><td className="p-3 md:p-4 font-bold text-amber-600 text-sm">{item.bags}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.weight} کلو</td></>}
+                                        {viewType === 'packing' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.variety}</td><td className="p-3 md:p-4 text-sm font-bold">{item.dozens}</td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.cost}</td></>}
+                                        {viewType === 'machine' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.details}</td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.cost}</td></>}
+                                        {viewType === 'salary' && <><td className="p-3 md:p-4 text-xs md:text-sm font-bold">{item.workerName} <span className="text-[10px] md:text-xs text-gray-400 font-normal">({item.salaryType})</span></td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.amount}</td></>}
+                                        <td className="p-3 md:p-4 no-print">
                                             <button onClick={() => handleDelete(item.id)} className="text-red-400 hover:text-red-600 bg-red-50 p-2 rounded-lg"><i data-lucide="trash-2" className="w-4 h-4"></i></button>
                                         </td>
                                     </tr>
                                 ))}
-                                {currentList.length === 0 && <tr><td colSpan="10" className="p-8 text-center text-gray-400">اس کیٹیگری میں کوئی ریکارڈ نہیں ہے</td></tr>}
+                                {currentList.length === 0 && <tr><td colSpan="10" className="p-6 md:p-8 text-center text-sm md:text-base text-gray-400">اس کیٹیگری میں کوئی ریکارڈ نہیں ہے</td></tr>}
                             </tbody>
                         </table>
                     </div>
@@ -456,7 +482,7 @@
         }
 
         // ==========================================
-        // 6. سرمایہ کاری پیج (Investment Page)
+        // 6. سرمایہ کاری پیج
         // ==========================================
         function InvestmentPage({ dbData, db, user, appId, showToast }) {
             const handleSave = async (e) => {
@@ -473,52 +499,55 @@
             const total = dbData.investment.reduce((s, i) => s + (i.amount || 0), 0);
 
             return (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border h-fit no-print">
-                        <h3 className="font-bold text-lg mb-4 text-emerald-900 border-b pb-2">نیا سرمایہ درج کریں</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                    <div className="lg:col-span-1 bg-white p-4 md:p-6 rounded-2xl shadow-sm border h-fit no-print">
+                        <h3 className="font-bold text-base md:text-lg mb-4 text-emerald-900 border-b pb-2">نیا سرمایہ درج کریں</h3>
                         <form onSubmit={handleSave} className="space-y-4">
-                            <input type="date" name="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full p-3 border rounded-xl bg-gray-50" />
-                            <input type="text" name="details" placeholder="سرمایہ کہاں سے آیا یا کہاں لگا؟" required className="w-full p-3 border rounded-xl" />
-                            <input type="number" name="amount" placeholder="رقم درج کریں" required className="w-full p-3 border rounded-xl" />
-                            <button type="submit" className="w-full bg-emerald-700 text-white p-3 rounded-xl font-bold hover:bg-emerald-800">محفوظ کریں</button>
+                            <input type="date" name="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full p-3 border rounded-xl bg-gray-50 text-sm md:text-base" />
+                            <input type="text" name="details" placeholder="سرمایہ کہاں سے آیا یا لگا؟" required className="w-full p-3 border rounded-xl text-sm md:text-base" />
+                            <input type="number" name="amount" placeholder="رقم درج کریں" required className="w-full p-3 border rounded-xl text-sm md:text-base" />
+                            <button type="submit" className="w-full bg-emerald-700 text-white p-3 rounded-xl font-bold hover:bg-emerald-800 text-sm md:text-base">محفوظ کریں</button>
                         </form>
                     </div>
-                    <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border">
-                        <div className="flex justify-between items-center mb-6 border-b pb-2">
-                            <h3 className="font-bold text-lg text-gray-800">سرمایہ کاری کا ریکارڈ</h3>
-                            <span className="bg-emerald-100 text-emerald-800 py-1 px-3 rounded-full font-bold text-sm">کل: Rs {total.toLocaleString()}</span>
+                    <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl shadow-sm border">
+                        <div className="flex justify-between items-center mb-4 md:mb-6 border-b pb-2">
+                            <h3 className="font-bold text-base md:text-lg text-gray-800">سرمایہ کاری ریکارڈ</h3>
+                            <span className="bg-emerald-100 text-emerald-800 py-1 px-2 md:px-3 rounded-full font-bold text-xs md:text-sm">کل: Rs {total.toLocaleString()}</span>
                         </div>
-                        <table className="w-full text-right print-table">
-                            <thead className="bg-gray-50"><tr><th className="p-3">تاریخ</th><th className="p-3">تفصیل</th><th className="p-3">رقم</th><th className="no-print"></th></tr></thead>
-                            <tbody>
-                                {dbData.investment.map(item => (
-                                    <tr key={item.id} className="border-b">
-                                        <td className="p-3 text-sm">{item.date}</td>
-                                        <td className="p-3 text-sm">{item.details}</td>
-                                        <td className="p-3 font-bold text-emerald-600">Rs {item.amount.toLocaleString()}</td>
-                                        <td className="p-3 no-print text-left"><button onClick={() => { if(window.confirm('ڈیلیٹ؟')) db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('investment').doc(item.id).delete() }} className="text-red-400 hover:text-red-600"><i data-lucide="trash-2" className="w-4 h-4"></i></button></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-right print-table min-w-[400px]">
+                                <thead className="bg-gray-50"><tr><th className="p-3 text-xs md:text-sm">تاریخ</th><th className="p-3 text-xs md:text-sm">تفصیل</th><th className="p-3 text-xs md:text-sm">رقم</th><th className="no-print"></th></tr></thead>
+                                <tbody>
+                                    {dbData.investment.map(item => (
+                                        <tr key={item.id} className="border-b">
+                                            <td className="p-3 text-xs md:text-sm">{item.date}</td>
+                                            <td className="p-3 text-xs md:text-sm">{item.details}</td>
+                                            <td className="p-3 font-bold text-emerald-600 text-xs md:text-sm">Rs {item.amount.toLocaleString()}</td>
+                                            <td className="p-3 no-print text-left"><button onClick={() => { if(window.confirm('ڈیلیٹ؟')) db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('investment').doc(item.id).delete() }} className="text-red-400 hover:text-red-600 bg-red-50 p-2 rounded-lg"><i data-lucide="trash-2" className="w-4 h-4"></i></button></td>
+                                        </tr>
+                                    ))}
+                                    {dbData.investment.length === 0 && <tr><td colSpan="4" className="text-center p-6 text-gray-400 text-sm">کوئی سرمایہ موجود نہیں</td></tr>}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             );
         }
 
-        // مددگار کمپوننٹ (Helper Card)
+        // مددگار کمپوننٹ
         function StatCard({ title, val, sub, icon, color }) {
             return (
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group">
-                    <div className={`absolute top-0 right-0 w-2 h-full ${color}`}></div>
+                <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group">
+                    <div className={`absolute top-0 right-0 w-1.5 md:w-2 h-full ${color}`}></div>
                     <div className="flex justify-between items-start">
                         <div>
-                            <h3 className="text-gray-500 text-sm font-bold mb-1">{title}</h3>
-                            <p className="text-2xl font-black text-gray-800">{val}</p>
-                            {sub && <p className="text-xs text-gray-400 mt-2">{sub}</p>}
+                            <h3 className="text-gray-500 text-[10px] md:text-sm font-bold mb-1">{title}</h3>
+                            <p className="text-xl md:text-2xl font-black text-gray-800">{val}</p>
+                            {sub && <p className="text-[10px] md:text-xs text-gray-400 mt-1 md:mt-2">{sub}</p>}
                         </div>
-                        <div className={`p-3 rounded-xl ${color} bg-opacity-10 text-gray-600 group-hover:scale-110 transition-transform`}>
-                            <i data-lucide={icon} className="w-6 h-6"></i>
+                        <div className={`p-2 md:p-3 rounded-xl ${color} bg-opacity-10 text-gray-600`}>
+                            <i data-lucide={icon} className="w-5 h-5 md:w-6 md:h-6"></i>
                         </div>
                     </div>
                 </div>
@@ -529,7 +558,6 @@
     </script>
 </body>
 </html>
-
 
 
 ```
