@@ -420,6 +420,18 @@
                 return (viewType === 'warehouse' || viewType === 'investment') ? list : list.filter(i => i.date?.startsWith(month));
             }, [viewType, dbData, month]);
 
+            // یہاں ٹوٹل رقم، وزن اور درجن کا حساب لگایا گیا ہے
+            const totals = useMemo(() => {
+                let t = { dozens: 0, weight: 0, bags: 0, cost: 0 };
+                currentList.forEach(item => {
+                    t.dozens += parseFloat(item.dozens) || 0;
+                    t.weight += parseFloat(item.weight) || parseFloat(item.totalWeight) || 0;
+                    t.bags += parseFloat(item.bags) || 0;
+                    t.cost += parseFloat(item.cost) || parseFloat(item.amount) || 0;
+                });
+                return t;
+            }, [currentList]);
+
             const handleDelete = async (id) => {
                 if(window.confirm("کیا آپ ڈیلیٹ کرنا چاہتے ہیں؟")) {
                     await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection(viewType).doc(id).delete();
@@ -443,6 +455,21 @@
                         </button>
                     </div>
 
+                    {/* یہ نیا حصہ ہے: ہر ریکارڈ کا اپنا ٹوٹل ٹیبل کے اوپر نمایاں نظر آئے گا */}
+                    {currentList.length > 0 && (
+                        <div className="mb-4 bg-emerald-50 border border-emerald-200 p-3 md:p-4 rounded-xl flex flex-wrap justify-between items-center shadow-sm">
+                            <span className="font-bold text-emerald-900 text-sm md:text-base">اس فہرست کا کل میزان:</span>
+                            <div className="flex gap-3 md:gap-4 font-black text-sm md:text-lg">
+                                {viewType === 'production' && <><span className="text-gray-900">{totals.dozens} درجن</span><span className="text-gray-600">{totals.weight} کلو</span></>}
+                                {viewType === 'warehouse' && <><span className="text-indigo-700">{totals.bags} بورے</span><span className="text-gray-600">{totals.weight} کلو</span></>}
+                                {viewType === 'yarn' && <><span className="text-amber-600">{totals.bags} بورے</span><span className="text-gray-600">{totals.weight} کلو</span></>}
+                                {viewType === 'packing' && <><span className="text-gray-900">{totals.dozens} درجن</span><span className="text-red-600">Rs {totals.cost.toLocaleString()}</span></>}
+                                {viewType === 'machine' && <span className="text-red-600">Rs {totals.cost.toLocaleString()}</span>}
+                                {viewType === 'salary' && <span className="text-red-600">Rs {totals.cost.toLocaleString()}</span>}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="overflow-x-auto rounded-xl border border-gray-200 w-full max-w-full">
                         <table className="w-full text-right print-table min-w-full">
                             <thead className="bg-gray-100 border-b border-gray-200">
@@ -464,9 +491,9 @@
                                         {viewType === 'production' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.variety}</td><td className="p-3 md:p-4 font-bold text-gray-900 text-sm">{item.dozens}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.weight} کلو</td></>}
                                         {viewType === 'warehouse' && <><td className="p-3 md:p-4 font-bold text-indigo-700 text-sm">{item.bags}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.totalWeight} کلو</td></>}
                                         {viewType === 'yarn' && <><td className="p-3 md:p-4 font-bold text-amber-600 text-sm">{item.bags}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.weight} کلو</td></>}
-                                        {viewType === 'packing' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.variety}</td><td className="p-3 md:p-4 text-sm font-bold">{item.dozens}</td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.cost}</td></>}
-                                        {viewType === 'machine' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.details}</td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.cost}</td></>}
-                                        {viewType === 'salary' && <><td className="p-3 md:p-4 text-xs md:text-sm font-bold">{item.workerName} <span className="text-[10px] md:text-xs text-gray-400 font-normal">({item.salaryType})</span></td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.amount}</td></>}
+                                        {viewType === 'packing' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.variety}</td><td className="p-3 md:p-4 text-sm font-bold">{item.dozens}</td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.cost.toLocaleString()}</td></>}
+                                        {viewType === 'machine' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.details}</td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.cost.toLocaleString()}</td></>}
+                                        {viewType === 'salary' && <><td className="p-3 md:p-4 text-xs md:text-sm font-bold">{item.workerName} <span className="text-[10px] md:text-xs text-gray-400 font-normal">({item.salaryType})</span></td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.amount.toLocaleString()}</td></>}
                                         <td className="p-3 md:p-4 no-print text-left">
                                             <button onClick={() => handleDelete(item.id)} className="text-red-400 hover:text-red-600 bg-red-50 p-2 rounded-lg"><i data-lucide="trash-2" className="w-4 h-4"></i></button>
                                         </td>
@@ -474,6 +501,22 @@
                                 ))}
                                 {currentList.length === 0 && <tr><td colSpan="10" className="p-6 md:p-8 text-center text-sm md:text-base text-gray-400">اس کیٹیگری میں کوئی ریکارڈ نہیں ہے</td></tr>}
                             </tbody>
+                            
+                            {/* پرنٹ اور ٹیبل کے نچلے حصے کے لیے بھی ٹوٹل برقرار رکھا گیا ہے */}
+                            {currentList.length > 0 && (
+                                <tfoot className="bg-emerald-100 border-t-2 border-emerald-300">
+                                    <tr>
+                                        <td className="p-3 md:p-4 text-sm md:text-base font-black text-emerald-900">کل میزان:</td>
+                                        {viewType === 'production' && <><td className="p-3 md:p-4"></td><td className="p-3 md:p-4 font-black text-gray-900 text-sm md:text-base">{totals.dozens} درجن</td><td className="p-3 md:p-4 text-sm md:text-base font-black text-gray-700">{totals.weight} کلو</td></>}
+                                        {viewType === 'warehouse' && <><td className="p-3 md:p-4 font-black text-indigo-700 text-sm md:text-base">{totals.bags} بورے</td><td className="p-3 md:p-4 text-sm md:text-base font-black text-gray-700">{totals.weight} کلو</td></>}
+                                        {viewType === 'yarn' && <><td className="p-3 md:p-4 font-black text-amber-600 text-sm md:text-base">{totals.bags} بورے</td><td className="p-3 md:p-4 text-sm md:text-base font-black text-gray-700">{totals.weight} کلو</td></>}
+                                        {viewType === 'packing' && <><td className="p-3 md:p-4"></td><td className="p-3 md:p-4 font-black text-gray-900 text-sm md:text-base">{totals.dozens} درجن</td><td className="p-3 md:p-4 font-black text-red-600 text-sm md:text-base">Rs {totals.cost.toLocaleString()}</td></>}
+                                        {viewType === 'machine' && <><td className="p-3 md:p-4"></td><td className="p-3 md:p-4 font-black text-red-600 text-sm md:text-base">Rs {totals.cost.toLocaleString()}</td></>}
+                                        {viewType === 'salary' && <><td className="p-3 md:p-4"></td><td className="p-3 md:p-4 font-black text-red-600 text-sm md:text-base">Rs {totals.cost.toLocaleString()}</td></>}
+                                        <td className="no-print"></td>
+                                    </tr>
+                                </tfoot>
+                            )}
                         </table>
                     </div>
                 </div>
