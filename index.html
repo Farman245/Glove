@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>فیکٹری مینجمنٹ سسٹم پرو</title>
+    <title>فارمان برادرز - فیکٹری مینجمنٹ سسٹم</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -61,7 +61,7 @@
         const gloveVarieties = ['سمال ہاف', 'میڈیم ہاف', 'لارج ہاف', 'سمال فل', 'میڈیم فل', 'لارج فل'];
 
         // ==========================================
-        // 1. مرکزی ایپ کمپوننٹ (Main App)
+        // 1. مرکزی ایپ کمپوننٹ
         // ==========================================
         function App() {
             const [user, setUser] = useState(null);
@@ -70,12 +70,11 @@
             const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
             const [toast, setToast] = useState('');
             
-            // موبائل سکرین چیک کرنے کے لیے
             const isMobileInit = window.innerWidth < 768;
             const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobileInit);
 
             const [dbData, setDbData] = useState({
-                warehouse: [], yarn: [], production: [], packing: [], machine: [], salary: [], investment: []
+                warehouse: [], yarn: [], production: [], packing: [], machine: [], salary: [], investment: [], transferPacking: [], jobWorkIncome: []
             });
 
             useEffect(() => {
@@ -85,7 +84,7 @@
 
             useEffect(() => {
                 if (!user) return;
-                const collections = ['warehouse', 'yarn', 'production', 'packing', 'machine', 'salary', 'investment'];
+                const collections = ['warehouse', 'yarn', 'production', 'packing', 'machine', 'salary', 'investment', 'transferPacking', 'jobWorkIncome'];
                 
                 const unsubscribes = collections.map(col => {
                     return db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection(col)
@@ -104,7 +103,7 @@
             const handleMenuClick = (id) => {
                 setActivePage(id);
                 if (window.innerWidth < 768) {
-                    setIsSidebarOpen(false); // موبائل پر کلک کے بعد سائیڈ بار بند کر دیں
+                    setIsSidebarOpen(false);
                 }
             };
 
@@ -115,32 +114,26 @@
                 { id: 'dashboard', label: 'ڈیش بورڈ', icon: 'layout-dashboard' },
                 { id: 'entry', label: 'ڈیٹا انٹری کریں', icon: 'plus-circle' },
                 { id: 'records', label: 'تمام ریکارڈز دیکھیں', icon: 'list' },
+                { id: 'settlement', label: 'حساب کتاب (منافع)', icon: 'pie-chart' },
                 { id: 'investment', label: 'سرمایہ کاری', icon: 'briefcase' }
             ];
 
             return (
                 <div className="flex h-screen overflow-hidden bg-gray-50">
-                    {/* موبائل اوورلے (Mobile Overlay) */}
+                    {/* موبائل اوورلے */}
                     {isSidebarOpen && (
-                        <div 
-                            className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden transition-opacity" 
-                            onClick={() => setIsSidebarOpen(false)}
-                        ></div>
+                        <div className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden transition-opacity" onClick={() => setIsSidebarOpen(false)}></div>
                     )}
 
-                    {/* سائیڈ بار (Sidebar) */}
+                    {/* سائیڈ بار */}
                     <aside className={`fixed md:relative top-0 right-0 h-full bg-emerald-900 text-white transition-transform duration-300 flex flex-col no-print z-40 shadow-2xl 
                         ${isSidebarOpen ? 'translate-x-0 w-64' : 'translate-x-full md:translate-x-0 md:w-20'}`}>
                         
                         <div className="p-4 flex items-center justify-between border-b border-emerald-800">
-                            {isSidebarOpen && <h1 className="font-bold text-lg whitespace-nowrap overflow-hidden">فیکٹری مینجمنٹ</h1>}
-                            
-                            {/* ڈیسک ٹاپ کے لیے مینو بٹن */}
+                            {isSidebarOpen && <h1 className="font-bold text-lg whitespace-nowrap overflow-hidden">فارمان برادرز</h1>}
                             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-emerald-800 rounded-lg hover:bg-emerald-700 hidden md:block">
                                 <i data-lucide="menu" className="w-5 h-5"></i>
                             </button>
-                            
-                            {/* موبائل کے لیے کلوز بٹن */}
                             <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-emerald-800 rounded-lg hover:bg-emerald-700 md:hidden">
                                 <i data-lucide="x" className="w-5 h-5"></i>
                             </button>
@@ -148,12 +141,7 @@
                         
                         <div className="flex-1 overflow-y-auto py-4 space-y-1">
                             {menuItems.map(item => (
-                                <button 
-                                    key={item.id} 
-                                    onClick={() => handleMenuClick(item.id)}
-                                    className={`w-full flex items-center px-4 py-3 transition-colors ${activePage === item.id ? 'bg-emerald-700 border-r-4 border-emerald-400' : 'hover:bg-emerald-800 border-r-4 border-transparent'}`}
-                                    title={item.label}
-                                >
+                                <button key={item.id} onClick={() => handleMenuClick(item.id)} className={`w-full flex items-center px-4 py-3 transition-colors ${activePage === item.id ? 'bg-emerald-700 border-r-4 border-emerald-400' : 'hover:bg-emerald-800 border-r-4 border-transparent'}`} title={item.label}>
                                     <i data-lucide={item.icon} className="min-w-[24px]"></i>
                                     {isSidebarOpen && <span className="mr-3 whitespace-nowrap">{item.label}</span>}
                                 </button>
@@ -173,12 +161,10 @@
                         </div>
                     </aside>
 
-                    {/* مرکزی حصہ (Main Content Area) */}
+                    {/* مرکزی حصہ */}
                     <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-                        {/* ٹاپ بار */}
                         <header className="bg-white shadow-sm p-3 md:p-4 flex justify-between items-center z-20 no-print sticky top-0">
                             <div className="flex items-center gap-3">
-                                {/* موبائل کے لیے مینو بٹن */}
                                 <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg md:hidden">
                                     <i data-lucide="menu" className="w-6 h-6"></i>
                                 </button>
@@ -194,18 +180,17 @@
                             </div>
                         </header>
 
-                        {/* پیج کا مواد (Page Content Switcher) */}
                         <main className="flex-1 overflow-y-auto p-3 md:p-6 print:p-0">
                             <div className="fade-in max-w-6xl mx-auto pb-20 md:pb-0">
                                 {activePage === 'dashboard' && <DashboardPage dbData={dbData} month={selectedMonth} />}
                                 {activePage === 'entry' && <EntryPage db={db} user={user} appId={appId} showToast={showToast} gloveVarieties={gloveVarieties} />}
                                 {activePage === 'records' && <RecordsPage dbData={dbData} db={db} user={user} appId={appId} month={selectedMonth} showToast={showToast} setActivePage={setActivePage} />}
+                                {activePage === 'settlement' && <SettlementPage dbData={dbData} month={selectedMonth} />}
                                 {activePage === 'investment' && <InvestmentPage dbData={dbData} db={db} user={user} appId={appId} showToast={showToast} />}
                             </div>
                         </main>
                     </div>
 
-                    {/* ٹوسٹ میسج */}
                     {toast && <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl z-50 text-sm font-bold flex items-center gap-2"><i data-lucide="check-circle" className="text-emerald-400 w-5 h-5"></i> {toast}</div>}
                 </div>
             );
@@ -216,19 +201,10 @@
         // ==========================================
         function LoginScreen({ auth }) {
             const [errorMsg, setErrorMsg] = useState('');
-
             const loginWithGoogle = () => {
                 setErrorMsg('');
                 const provider = new firebase.auth.GoogleAuthProvider();
-                auth.signInWithPopup(provider).catch(err => {
-                    if (err.code === 'auth/unauthorized-domain') {
-                        setErrorMsg('اس ونڈو کی ڈومین کو اجازت نہیں ہے۔ گٹ ہب پر یہ ٹھیک چلے گا۔');
-                    } else if (err.code === 'auth/popup-blocked') {
-                        setErrorMsg('براؤزر نے پاپ اپ کو بلاک کر دیا ہے۔');
-                    } else {
-                        setErrorMsg(err.message);
-                    }
-                });
+                auth.signInWithPopup(provider).catch(err => setErrorMsg(err.message));
             };
 
             return (
@@ -238,24 +214,9 @@
                             <i data-lucide="factory" className="text-emerald-600 w-8 h-8 md:w-10 md:h-10"></i>
                         </div>
                         <h1 className="text-xl md:text-2xl font-black text-gray-800 mb-2">فیکٹری مینجمنٹ ٹول</h1>
-                        <p className="text-gray-500 mb-6 text-xs md:text-sm">اپنے محفوظ سسٹم میں داخل ہونے کے لیے لاگ ان کریں</p>
-                        
-                        {errorMsg && (
-                            <div className="mb-4 bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-lg font-bold">
-                                {errorMsg}
-                            </div>
-                        )}
-
-                        <button onClick={loginWithGoogle} className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition shadow-sm active:scale-95 text-sm md:text-base">
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 md:w-6 md:h-6" /> 
-                            گوگل اکاؤنٹ سے لاگ ان کریں
+                        <button onClick={loginWithGoogle} className="w-full mt-6 flex items-center justify-center gap-3 bg-white border-2 border-gray-200 py-3 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5 md:w-6 md:h-6" /> گوگل اکاؤنٹ سے لاگ ان کریں
                         </button>
-                        
-                        <div className="mt-6 pt-4 border-t border-gray-100">
-                            <button onClick={() => auth.signInAnonymously().catch(e=>setErrorMsg(e.message))} className="text-xs text-gray-500 hover:text-emerald-700 transition font-bold underline">
-                                عارضی ٹیسٹ لاگ ان کریں
-                            </button>
-                        </div>
                     </div>
                 </div>
             );
@@ -271,6 +232,8 @@
                 const mPack = filterMonth(dbData.packing);
                 const mMach = filterMonth(dbData.machine);
                 const mSal = filterMonth(dbData.salary);
+                const mTrans = filterMonth(dbData.transferPacking);
+                const mJob = filterMonth(dbData.jobWorkIncome);
                 
                 return {
                     whBags: dbData.warehouse.reduce((s, i) => s + (i.bags || 0), 0) - dbData.yarn.reduce((s, i) => s + (i.bags || 0), 0),
@@ -278,8 +241,10 @@
                     prodDoz: mProd.reduce((s, i) => s + (i.dozens || 0), 0),
                     prodWeight: mProd.reduce((s, i) => s + (i.weight || 0), 0),
                     packDoz: mPack.reduce((s, i) => s + (i.dozens || 0), 0),
+                    transDoz: mTrans.reduce((s, i) => s + (i.dozens || 0), 0),
                     totalExp: mPack.reduce((s, i) => s + (i.cost || 0), 0) + mMach.reduce((s, i) => s + (i.cost || 0), 0) + mSal.reduce((s, i) => s + (i.amount || 0), 0),
-                    totalInv: dbData.investment.reduce((s, i) => s + (i.amount || 0), 0)
+                    totalInv: dbData.investment.reduce((s, i) => s + (i.amount || 0), 0),
+                    jobIncome: mJob.reduce((s, i) => s + (i.amount || 0), 0)
                 };
             }, [dbData, month]);
 
@@ -288,8 +253,8 @@
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                         <StatCard title="گودام سٹاک" val={`${stats.whBags} بورے`} sub={`${stats.whWeight} کلو`} icon="home" color="bg-indigo-600" />
                         <StatCard title="ماہانہ پروڈکشن" val={`${stats.prodDoz} درجن`} sub={`${stats.prodWeight} کلو`} icon="box" color="bg-emerald-600" />
-                        <StatCard title="ماہانہ پیکنگ" val={`${stats.packDoz} درجن`} sub="تیار مال" icon="package" color="bg-purple-600" />
-                        <StatCard title="ماہانہ خرچہ" val={`Rs ${stats.totalExp.toLocaleString()}`} sub="بل + تنخواہ + پیکنگ" icon="trending-down" color="bg-red-600" />
+                        <StatCard title="کل مزدوری بلنگ (اس ماہ)" val={`Rs ${stats.jobIncome.toLocaleString()}`} sub="مزدوری سے آمدنی" icon="banknote" color="bg-blue-600" />
+                        <StatCard title="ماہانہ کل خرچہ" val={`Rs ${stats.totalExp.toLocaleString()}`} sub="بل + تنخواہ + پیکنگ" icon="trending-down" color="bg-red-600" />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mt-4 md:mt-6">
@@ -297,12 +262,16 @@
                             <h3 className="font-bold text-base md:text-lg mb-4 flex items-center gap-2"><i data-lucide="pie-chart" className="text-gray-400 w-5 h-5"></i> فیکٹری کی مجموعی پوزیشن</h3>
                             <div className="space-y-3 md:space-y-4 text-sm md:text-base">
                                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span className="text-gray-600">کل سرمایہ کاری</span>
+                                    <span className="text-gray-600">کل سرمایہ کاری (دونوں پارٹنرز)</span>
                                     <span className="font-bold text-emerald-700">Rs {stats.totalInv.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span className="text-gray-600">ان پیک دستانے (اندازاً)</span>
-                                    <span className="font-bold text-orange-600">{(stats.prodDoz - stats.packDoz).toFixed(2)} درجن</span>
+                                    <span className="text-gray-600">پیکنگ گودام روانگی (اس ماہ)</span>
+                                    <span className="font-bold text-teal-600">{stats.transDoz.toFixed(2)} درجن</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-gray-600">فیکٹری میں موجود ان پیک مال</span>
+                                    <span className="font-bold text-orange-600">{(stats.prodDoz - stats.transDoz).toFixed(2)} درجن</span>
                                 </div>
                             </div>
                         </div>
@@ -316,7 +285,6 @@
         // ==========================================
         function EntryPage({ db, user, appId, showToast, gloveVarieties }) {
             const [entryType, setEntryType] = useState('production');
-            const [editingItem, setEditingItem] = useState(null);
 
             const handleSave = async (e) => {
                 e.preventDefault();
@@ -334,12 +302,13 @@
             };
 
             const entryOptions = [
+                { id: 'jobWorkIncome', label: 'مزدوری بلنگ', color: 'blue' },
                 { id: 'production', label: 'پروڈکشن', color: 'emerald' },
-                { id: 'warehouse', label: 'گودام آمد', color: 'indigo' },
-                { id: 'yarn', label: 'فیکٹری آمد', color: 'amber' },
-                { id: 'packing', label: 'پیکنگ بل', color: 'purple' },
+                { id: 'transferPacking', label: 'پیکنگ روانگی', color: 'teal' },
+                { id: 'yarn', label: 'دھاگہ آمد', color: 'amber' },
                 { id: 'machine', label: 'مشین خرچہ', color: 'red' },
-                { id: 'salary', label: 'تنخواہ', color: 'blue' }
+                { id: 'salary', label: 'تنخواہ', color: 'indigo' },
+                { id: 'packing', label: 'پیکنگ خرچہ', color: 'purple' }
             ];
 
             return (
@@ -355,8 +324,18 @@
                     <form onSubmit={handleSave} className="space-y-4 md:space-y-6">
                         <div>
                             <label className="text-xs md:text-sm font-bold text-gray-500 mb-1 block">تاریخ درج کریں</label>
-                            <input type="date" name="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full p-3 md:p-4 border border-gray-300 rounded-xl bg-gray-50 focus:ring-2 focus:ring-emerald-500 outline-none text-sm md:text-base" />
+                            <input type="date" name="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full p-3 md:p-4 border border-gray-300 rounded-xl bg-gray-50 outline-none text-sm md:text-base" />
                         </div>
+
+                        {entryType === 'jobWorkIncome' && (
+                            <div className="space-y-4">
+                                <input type="text" name="partyName" placeholder="پارٹی کا نام (کس کا مال ہے؟)" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <input type="text" name="details" placeholder="تفصیل / ورائٹی" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                    <input type="number" name="amount" placeholder="کل بل کی رقم" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                </div>
+                            </div>
+                        )}
 
                         {entryType === 'warehouse' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -365,14 +344,16 @@
                             </div>
                         )}
 
-                        {(entryType === 'production' || entryType === 'packing') && (
+                        {(entryType === 'production' || entryType === 'packing' || entryType === 'transferPacking') && (
                             <div className="space-y-4">
                                 <select name="variety" className="w-full p-3 md:p-4 border border-gray-300 rounded-xl bg-gray-50 text-sm md:text-base">
                                     {gloveVarieties.map(v => <option key={v} value={v}>{v}</option>)}
                                 </select>
                                 <div className="grid grid-cols-2 gap-4">
                                     <input type="number" name="dozens" placeholder="درجن" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
-                                    <input type="number" name={entryType === 'production' ? 'weight' : 'cost'} placeholder={entryType === 'production' ? 'وزن' : 'خرچہ'} required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                    {entryType === 'production' && <input type="number" name="weight" placeholder="وزن" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />}
+                                    {entryType === 'packing' && <input type="number" name="cost" placeholder="خرچہ (میری جیب سے)" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />}
+                                    {entryType === 'transferPacking' && <input type="text" name="details" placeholder="تفصیل (اگر کوئی ہے)" className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />}
                                 </div>
                             </div>
                         )}
@@ -386,8 +367,8 @@
 
                         {entryType === 'machine' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input type="number" name="cost" placeholder="رقم" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
-                                <input type="text" name="details" placeholder="تفصیل" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                <input type="number" name="cost" placeholder="خرچہ کی رقم" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
+                                <input type="text" name="details" placeholder="تفصیل (بل، پرزہ وغیرہ)" required className="w-full p-3 md:p-4 border border-gray-300 rounded-xl text-sm md:text-base" />
                             </div>
                         )}
 
@@ -413,14 +394,13 @@
         // 5. ریکارڈز پیج
         // ==========================================
         function RecordsPage({ dbData, db, user, appId, month, showToast }) {
-            const [viewType, setViewType] = useState('production');
+            const [viewType, setViewType] = useState('jobWorkIncome');
 
             const currentList = useMemo(() => {
                 const list = dbData[viewType] || [];
                 return (viewType === 'warehouse' || viewType === 'investment') ? list : list.filter(i => i.date?.startsWith(month));
             }, [viewType, dbData, month]);
 
-            // یہاں ٹوٹل رقم، وزن اور درجن کا حساب لگایا گیا ہے
             const totals = useMemo(() => {
                 let t = { dozens: 0, weight: 0, bags: 0, cost: 0 };
                 currentList.forEach(item => {
@@ -443,10 +423,11 @@
                 <div className="bg-white p-3 md:p-6 rounded-2xl shadow-sm border border-gray-100">
                     <div className="mb-4 md:mb-6 no-print flex justify-between gap-2 items-center">
                         <select value={viewType} onChange={e => setViewType(e.target.value)} className="w-full md:w-auto p-2 md:p-3 border border-gray-300 rounded-xl bg-gray-50 outline-none font-bold text-emerald-900 text-sm md:text-base">
+                            <option value="jobWorkIncome">مزدوری بلنگ (آمدنی)</option>
                             <option value="production">پروڈکشن کا ریکارڈ</option>
-                            <option value="warehouse">گودام کا ریکارڈ</option>
+                            <option value="transferPacking">پیکنگ گودام روانگی</option>
                             <option value="yarn">فیکٹری آمد ریکارڈ</option>
-                            <option value="packing">پیکنگ بل ریکارڈ</option>
+                            <option value="packing">پیکنگ خرچہ ریکارڈ</option>
                             <option value="machine">مشین خرچہ ریکارڈ</option>
                             <option value="salary">تنخواہ کھاتہ</option>
                         </select>
@@ -455,13 +436,13 @@
                         </button>
                     </div>
 
-                    {/* یہ نیا حصہ ہے: ہر ریکارڈ کا اپنا ٹوٹل ٹیبل کے اوپر نمایاں نظر آئے گا */}
                     {currentList.length > 0 && (
                         <div className="mb-4 bg-emerald-50 border border-emerald-200 p-3 md:p-4 rounded-xl flex flex-wrap justify-between items-center shadow-sm">
                             <span className="font-bold text-emerald-900 text-sm md:text-base">اس فہرست کا کل میزان:</span>
                             <div className="flex gap-3 md:gap-4 font-black text-sm md:text-lg">
+                                {viewType === 'jobWorkIncome' && <span className="text-blue-700">Rs {totals.cost.toLocaleString()}</span>}
                                 {viewType === 'production' && <><span className="text-gray-900">{totals.dozens} درجن</span><span className="text-gray-600">{totals.weight} کلو</span></>}
-                                {viewType === 'warehouse' && <><span className="text-indigo-700">{totals.bags} بورے</span><span className="text-gray-600">{totals.weight} کلو</span></>}
+                                {viewType === 'transferPacking' && <span className="text-teal-700">{totals.dozens} درجن</span>}
                                 {viewType === 'yarn' && <><span className="text-amber-600">{totals.bags} بورے</span><span className="text-gray-600">{totals.weight} کلو</span></>}
                                 {viewType === 'packing' && <><span className="text-gray-900">{totals.dozens} درجن</span><span className="text-red-600">Rs {totals.cost.toLocaleString()}</span></>}
                                 {viewType === 'machine' && <span className="text-red-600">Rs {totals.cost.toLocaleString()}</span>}
@@ -475,8 +456,9 @@
                             <thead className="bg-gray-100 border-b border-gray-200">
                                 <tr>
                                     <th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">تاریخ</th>
+                                    {viewType === 'jobWorkIncome' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">پارٹی کا نام</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">تفصیل</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">رقم</th></>}
                                     {viewType === 'production' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">ورائٹی</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">درجن</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">وزن</th></>}
-                                    {viewType === 'warehouse' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">بورے</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">وزن</th></>}
+                                    {viewType === 'transferPacking' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">ورائٹی</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">درجن</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">تفصیل</th></>}
                                     {viewType === 'yarn' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">بورے</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">وزن</th></>}
                                     {viewType === 'packing' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">ورائٹی</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">درجن</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">رقم</th></>}
                                     {viewType === 'machine' && <><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">تفصیل</th><th className="p-3 md:p-4 text-xs md:text-sm font-bold text-gray-700">رقم</th></>}
@@ -488,8 +470,9 @@
                                 {currentList.map(item => (
                                     <tr key={item.id} className="border-b border-gray-100 hover:bg-emerald-50 transition">
                                         <td className="p-3 md:p-4 text-xs md:text-sm whitespace-nowrap">{item.date}</td>
+                                        {viewType === 'jobWorkIncome' && <><td className="p-3 md:p-4 text-xs md:text-sm font-bold">{item.partyName}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.details}</td><td className="p-3 md:p-4 text-sm font-bold text-blue-700">Rs {item.amount.toLocaleString()}</td></>}
                                         {viewType === 'production' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.variety}</td><td className="p-3 md:p-4 font-bold text-gray-900 text-sm">{item.dozens}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.weight} کلو</td></>}
-                                        {viewType === 'warehouse' && <><td className="p-3 md:p-4 font-bold text-indigo-700 text-sm">{item.bags}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.totalWeight} کلو</td></>}
+                                        {viewType === 'transferPacking' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.variety}</td><td className="p-3 md:p-4 font-bold text-gray-900 text-sm">{item.dozens}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.details || '-'}</td></>}
                                         {viewType === 'yarn' && <><td className="p-3 md:p-4 font-bold text-amber-600 text-sm">{item.bags}</td><td className="p-3 md:p-4 text-xs md:text-sm text-gray-500">{item.weight} کلو</td></>}
                                         {viewType === 'packing' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.variety}</td><td className="p-3 md:p-4 text-sm font-bold">{item.dozens}</td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.cost.toLocaleString()}</td></>}
                                         {viewType === 'machine' && <><td className="p-3 md:p-4 text-xs md:text-sm">{item.details}</td><td className="p-3 md:p-4 font-bold text-red-600 text-sm">Rs {item.cost.toLocaleString()}</td></>}
@@ -501,14 +484,13 @@
                                 ))}
                                 {currentList.length === 0 && <tr><td colSpan="10" className="p-6 md:p-8 text-center text-sm md:text-base text-gray-400">اس کیٹیگری میں کوئی ریکارڈ نہیں ہے</td></tr>}
                             </tbody>
-                            
-                            {/* پرنٹ اور ٹیبل کے نچلے حصے کے لیے بھی ٹوٹل برقرار رکھا گیا ہے */}
                             {currentList.length > 0 && (
                                 <tfoot className="bg-emerald-100 border-t-2 border-emerald-300">
                                     <tr>
                                         <td className="p-3 md:p-4 text-sm md:text-base font-black text-emerald-900">کل میزان:</td>
+                                        {viewType === 'jobWorkIncome' && <><td className="p-3 md:p-4"></td><td className="p-3 md:p-4"></td><td className="p-3 md:p-4 font-black text-blue-700 text-sm md:text-base">Rs {totals.cost.toLocaleString()}</td></>}
                                         {viewType === 'production' && <><td className="p-3 md:p-4"></td><td className="p-3 md:p-4 font-black text-gray-900 text-sm md:text-base">{totals.dozens} درجن</td><td className="p-3 md:p-4 text-sm md:text-base font-black text-gray-700">{totals.weight} کلو</td></>}
-                                        {viewType === 'warehouse' && <><td className="p-3 md:p-4 font-black text-indigo-700 text-sm md:text-base">{totals.bags} بورے</td><td className="p-3 md:p-4 text-sm md:text-base font-black text-gray-700">{totals.weight} کلو</td></>}
+                                        {viewType === 'transferPacking' && <><td className="p-3 md:p-4"></td><td className="p-3 md:p-4 font-black text-gray-900 text-sm md:text-base">{totals.dozens} درجن</td><td className="p-3 md:p-4"></td></>}
                                         {viewType === 'yarn' && <><td className="p-3 md:p-4 font-black text-amber-600 text-sm md:text-base">{totals.bags} بورے</td><td className="p-3 md:p-4 text-sm md:text-base font-black text-gray-700">{totals.weight} کلو</td></>}
                                         {viewType === 'packing' && <><td className="p-3 md:p-4"></td><td className="p-3 md:p-4 font-black text-gray-900 text-sm md:text-base">{totals.dozens} درجن</td><td className="p-3 md:p-4 font-black text-red-600 text-sm md:text-base">Rs {totals.cost.toLocaleString()}</td></>}
                                         {viewType === 'machine' && <><td className="p-3 md:p-4"></td><td className="p-3 md:p-4 font-black text-red-600 text-sm md:text-base">Rs {totals.cost.toLocaleString()}</td></>}
@@ -524,13 +506,107 @@
         }
 
         // ==========================================
-        // 6. سرمایہ کاری پیج
+        // 6. منافع کا حساب پیج (نئی پارٹنرشپ سیٹنگ)
+        // ==========================================
+        function SettlementPage({ dbData, month }) {
+            const settlement = useMemo(() => {
+                const filterMonth = (list) => list.filter(i => i.date?.startsWith(month));
+                
+                // آمدنی (مزدوری بل)
+                const totalIncome = filterMonth(dbData.jobWorkIncome).reduce((s, i) => s + (i.amount || 0), 0);
+                
+                // خرچے جو فارمان بھائی نے جیب سے دیے (تنخواہ، مشین، پیکنگ)
+                const mPack = filterMonth(dbData.packing).reduce((s, i) => s + (i.cost || 0), 0);
+                const mMach = filterMonth(dbData.machine).reduce((s, i) => s + (i.cost || 0), 0);
+                const mSal = filterMonth(dbData.salary).reduce((s, i) => s + (i.amount || 0), 0);
+                const totalExpense = mPack + mMach + mSal;
+                
+                // خالص منافع
+                const netProfit = totalIncome - totalExpense;
+                
+                // تقسیم (50-50)
+                const partnerShare = netProfit > 0 ? netProfit / 2 : (netProfit / 2);
+                const farmanShare = netProfit > 0 ? netProfit / 2 : (netProfit / 2);
+                
+                // فارمان بھائی کی کل وصولی (منافع + جیب سے دیے گئے خرچوں کی واپسی)
+                const farmanTotalReclaim = farmanShare + totalExpense;
+
+                return { totalIncome, totalExpense, netProfit, partnerShare, farmanShare, farmanTotalReclaim };
+            }, [dbData, month]);
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
+                        <h2 className="text-xl font-black text-gray-800 mb-2">ماہانہ کھاتہ (منافع اور خرچ)</h2>
+                        <p className="text-gray-500 text-sm">اس ماہ کی کل آمدنی، خرچ اور پارٹنرز کے حصے کی تفصیل</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-blue-50 border border-blue-200 p-6 rounded-2xl text-center">
+                            <p className="text-blue-800 font-bold mb-2">کل آمدنی (مزدوری)</p>
+                            <h3 className="text-3xl font-black text-blue-900">Rs {settlement.totalIncome.toLocaleString()}</h3>
+                        </div>
+                        <div className="bg-red-50 border border-red-200 p-6 rounded-2xl text-center">
+                            <p className="text-red-800 font-bold mb-2">کل خرچہ (فارمان کی جیب سے)</p>
+                            <h3 className="text-3xl font-black text-red-900">Rs {settlement.totalExpense.toLocaleString()}</h3>
+                        </div>
+                        <div className={`${settlement.netProfit >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-orange-50 border-orange-200'} border p-6 rounded-2xl text-center`}>
+                            <p className={`${settlement.netProfit >= 0 ? 'text-emerald-800' : 'text-orange-800'} font-bold mb-2`}>خالص منافع</p>
+                            <h3 className={`text-3xl font-black ${settlement.netProfit >= 0 ? 'text-emerald-900' : 'text-orange-900'}`}>Rs {settlement.netProfit.toLocaleString()}</h3>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                        {/* پارٹنر کا حصہ */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-indigo-500">
+                            <h3 className="font-bold text-lg mb-4 text-gray-800 flex items-center gap-2">
+                                <i data-lucide="user" className="text-indigo-500 w-5 h-5"></i> پارٹنر کا حصہ (50%)
+                            </h3>
+                            <div className="bg-gray-50 p-4 rounded-xl flex justify-between items-center">
+                                <span className="text-gray-600">خالص منافع میں سے:</span>
+                                <span className="font-black text-indigo-700 text-xl">Rs {settlement.partnerShare.toLocaleString()}</span>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-3 text-center">یہ وہ رقم ہے جو پارٹنر کو اس مہینے دی جائے گی۔</p>
+                        </div>
+
+                        {/* فارمان برادرز کا حصہ */}
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-emerald-500">
+                            <h3 className="font-bold text-lg mb-4 text-gray-800 flex items-center gap-2">
+                                <i data-lucide="shield-check" className="text-emerald-500 w-5 h-5"></i> فارمان برادرز (آپ کی وصولی)
+                            </h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center border-b pb-2">
+                                    <span className="text-gray-600 text-sm">منافع کا حصہ (50%):</span>
+                                    <span className="font-bold text-emerald-700">Rs {settlement.farmanShare.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center border-b pb-2">
+                                    <span className="text-gray-600 text-sm">خرچے کی واپسی (جو آپ نے جیب سے دیا):</span>
+                                    <span className="font-bold text-red-600">Rs {settlement.totalExpense.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-2 bg-emerald-50 p-3 rounded-lg">
+                                    <span className="text-emerald-900 font-bold">کل وصولی:</span>
+                                    <span className="font-black text-emerald-800 text-xl">Rs {settlement.farmanTotalReclaim.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==========================================
+        // 7. سرمایہ کاری پیج (اپڈیٹڈ پارٹنرز کے ساتھ)
         // ==========================================
         function InvestmentPage({ dbData, db, user, appId, showToast }) {
             const handleSave = async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
-                const data = { date: formData.get('date'), details: formData.get('details'), amount: parseFloat(formData.get('amount')) || 0 };
+                const data = { 
+                    date: formData.get('date'), 
+                    details: formData.get('details'), 
+                    amount: parseFloat(formData.get('amount')) || 0,
+                    investor: formData.get('investor')
+                };
                 try {
                     await db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('investment').add({ ...data, timestamp: Date.now() });
                     showToast("سرمایہ محفوظ ہو گیا!");
@@ -538,7 +614,9 @@
                 } catch (err) { showToast("ایرر آیا ہے"); }
             };
 
-            const total = dbData.investment.reduce((s, i) => s + (i.amount || 0), 0);
+            const myInv = dbData.investment.filter(i => i.investor === 'farman').reduce((s, i) => s + (i.amount || 0), 0);
+            const partnerInv = dbData.investment.filter(i => i.investor === 'partner').reduce((s, i) => s + (i.amount || 0), 0);
+            const totalInv = myInv + partnerInv;
 
             return (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
@@ -546,29 +624,37 @@
                         <h3 className="font-bold text-base md:text-lg mb-4 text-emerald-900 border-b pb-2">نیا سرمایہ درج کریں</h3>
                         <form onSubmit={handleSave} className="space-y-4">
                             <input type="date" name="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full p-3 border rounded-xl bg-gray-50 text-sm md:text-base" />
-                            <input type="text" name="details" placeholder="سرمایہ کہاں سے آیا یا لگا؟" required className="w-full p-3 border rounded-xl text-sm md:text-base" />
+                            <select name="investor" required className="w-full p-3 border rounded-xl bg-gray-50 text-sm md:text-base">
+                                <option value="farman">فارمان برادرز (میں نے دیے)</option>
+                                <option value="partner">پارٹنر نے دیے</option>
+                            </select>
+                            <input type="text" name="details" placeholder="سرمایہ کس چیز پر لگا (مشین وغیرہ)؟" required className="w-full p-3 border rounded-xl text-sm md:text-base" />
                             <input type="number" name="amount" placeholder="رقم درج کریں" required className="w-full p-3 border rounded-xl text-sm md:text-base" />
                             <button type="submit" className="w-full bg-emerald-700 text-white p-3 rounded-xl font-bold hover:bg-emerald-800 text-sm md:text-base">محفوظ کریں</button>
                         </form>
                     </div>
                     <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl shadow-sm border">
-                        <div className="flex justify-between items-center mb-4 md:mb-6 border-b pb-2">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6 border-b pb-4 gap-4">
                             <h3 className="font-bold text-base md:text-lg text-gray-800">سرمایہ کاری ریکارڈ</h3>
-                            <span className="bg-emerald-100 text-emerald-800 py-1 px-2 md:px-3 rounded-full font-bold text-xs md:text-sm">کل: Rs {total.toLocaleString()}</span>
+                            <div className="flex gap-2 w-full md:w-auto">
+                                <span className="bg-emerald-100 text-emerald-800 py-1 px-3 rounded-lg font-bold text-xs flex-1 text-center">فارمان: Rs {myInv.toLocaleString()}</span>
+                                <span className="bg-indigo-100 text-indigo-800 py-1 px-3 rounded-lg font-bold text-xs flex-1 text-center">پارٹنر: Rs {partnerInv.toLocaleString()}</span>
+                            </div>
                         </div>
                         <div className="overflow-x-auto">
-                            <table className="w-full text-right print-table min-w-[400px]">
-                                <thead className="bg-gray-50"><tr><th className="p-3 text-xs md:text-sm">تاریخ</th><th className="p-3 text-xs md:text-sm">تفصیل</th><th className="p-3 text-xs md:text-sm">رقم</th><th className="no-print"></th></tr></thead>
+                            <table className="w-full text-right print-table min-w-[500px]">
+                                <thead className="bg-gray-50"><tr><th className="p-3 text-xs md:text-sm">تاریخ</th><th className="p-3 text-xs md:text-sm">سرمایہ کار</th><th className="p-3 text-xs md:text-sm">تفصیل</th><th className="p-3 text-xs md:text-sm">رقم</th><th className="no-print"></th></tr></thead>
                                 <tbody>
                                     {dbData.investment.map(item => (
                                         <tr key={item.id} className="border-b">
                                             <td className="p-3 text-xs md:text-sm">{item.date}</td>
+                                            <td className="p-3 text-xs md:text-sm font-bold text-gray-700">{item.investor === 'farman' ? 'فارمان برادرز' : 'پارٹنر'}</td>
                                             <td className="p-3 text-xs md:text-sm">{item.details}</td>
-                                            <td className="p-3 font-bold text-emerald-600 text-xs md:text-sm">Rs {item.amount.toLocaleString()}</td>
+                                            <td className={`p-3 font-bold text-xs md:text-sm ${item.investor === 'farman' ? 'text-emerald-600' : 'text-indigo-600'}`}>Rs {item.amount.toLocaleString()}</td>
                                             <td className="p-3 no-print text-left"><button onClick={() => { if(window.confirm('ڈیلیٹ؟')) db.collection('artifacts').doc(appId).collection('users').doc(user.uid).collection('investment').doc(item.id).delete() }} className="text-red-400 hover:text-red-600 bg-red-50 p-2 rounded-lg"><i data-lucide="trash-2" className="w-4 h-4"></i></button></td>
                                         </tr>
                                     ))}
-                                    {dbData.investment.length === 0 && <tr><td colSpan="4" className="text-center p-6 text-gray-400 text-sm">کوئی سرمایہ موجود نہیں</td></tr>}
+                                    {dbData.investment.length === 0 && <tr><td colSpan="5" className="text-center p-6 text-gray-400 text-sm">کوئی سرمایہ موجود نہیں</td></tr>}
                                 </tbody>
                             </table>
                         </div>
