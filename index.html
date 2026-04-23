@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>فارمان برادرز - فیکٹری مینجمنٹ سسٹم</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#064e3b">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -684,5 +689,20 @@
 
         ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker رجسٹریشن کامیاب رہی: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker رجسٹریشن فیل ہو گئی: ', err);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>
+
